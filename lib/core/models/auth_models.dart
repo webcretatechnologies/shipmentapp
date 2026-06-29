@@ -46,6 +46,8 @@ class Capabilities {
     this.kitting = false,
     this.boxScanning = false,
     this.racking = false,
+    this.shortSku = false,
+    this.shortBox = false,
   });
 
   final bool viewShipments;
@@ -53,6 +55,8 @@ class Capabilities {
   final bool kitting;
   final bool boxScanning;
   final bool racking;
+  final bool shortSku;
+  final bool shortBox;
 
   factory Capabilities.fromJson(Map<String, dynamic> json) => Capabilities(
         viewShipments: json['view_shipments'] != false,
@@ -60,6 +64,8 @@ class Capabilities {
         kitting: json['kitting'] == true,
         boxScanning: json['box_scanning'] == true,
         racking: json['racking'] == true,
+        shortSku: json['short_sku'] == true,
+        shortBox: json['short_box'] == true,
       );
 }
 
