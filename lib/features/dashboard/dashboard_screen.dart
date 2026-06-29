@@ -6,7 +6,31 @@ import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/auth/auth_controller.dart';
+import '../../core/models/auth_models.dart';
 import '../../core/models/dashboard_counts.dart';
+
+/// A card is shown only if the logged-in user has access to that module —
+/// mirroring their admin-panel permissions (scan-only user sees only scanning,
+/// racking access → racking, short-sku access → short-sku, etc.).
+bool _hasAccess(DashboardModule m, Capabilities c, bool isSupplier) {
+  switch (m) {
+    case DashboardModule.shipments:
+      return c.viewShipments || c.scan;
+    case DashboardModule.racking:
+      return c.racking;
+    case DashboardModule.boxScanning:
+      return c.boxScanning;
+    case DashboardModule.kitting:
+      return c.kitting;
+    case DashboardModule.shortSku:
+      return c.shortSku;
+    case DashboardModule.shortBox:
+      return c.shortBox;
+    case DashboardModule.invoices:
+    case DashboardModule.purchaseOrders:
+      return isSupplier; // vendor-only modules
+  }
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -43,7 +67,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     final role = auth.role;
-    final modules = modulesForRole(role);
+    final caps = auth.user?.capabilities ?? const Capabilities();
+    // Only the modules this user actually has access to (same as admin permissions).
+    final modules = modulesForRole(role)
+        .where((m) => _hasAccess(m, caps, role.isSupplier))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -77,7 +105,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
-        child: FutureBuilder<DashboardCounts>(
+        child: modules.isEmpty
+            ? ListView(children: const [
+                SizedBox(height: 120),
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'No modules are assigned to your account.\nAsk an admin to grant access.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+                ),
+              ])
+            : FutureBuilder<DashboardCounts>(
           future: _future,
           builder: (context, snap) {
             final counts = snap.data ?? DashboardCounts();
