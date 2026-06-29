@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../app/app_config.dart';
 import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
@@ -30,7 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final data = await api.get(ApiEndpoints.dashboardCounts);
       if (data is Map) return DashboardCounts.fromJson(Map<String, dynamic>.from(data));
     } catch (_) {
-      // counts endpoint optional — fall back to empty so cards still render
+      // counts are optional — cards still render with 0
     }
     return DashboardCounts();
   }
@@ -42,13 +41,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final config = context.read<AppConfig>();
     final auth = context.watch<AuthController>();
-    final modules = config.flavorConfig.modules;
+    final role = auth.role;
+    final modules = modulesForRole(role);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(config.flavorConfig.appTitle),
+        title: Text(role.title),
         actions: [
           PopupMenuButton<String>(
             onSelected: (v) {
@@ -57,7 +56,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             itemBuilder: (_) => [
               PopupMenuItem(
                 enabled: false,
-                child: Text(auth.user?.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(auth.user?.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(role.isSupplier ? 'Vendor' : 'Plantex',
+                        style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                  ],
+                ),
               ),
               const PopupMenuDivider(),
               const PopupMenuItem(value: 'logout', child: Text('Logout')),
@@ -86,7 +92,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   .map((m) => _ModuleCard(
                         module: m,
                         count: counts.forModule(m.name),
-                        accent: config.flavorConfig.accent,
                         onTap: () => context.push(m.route),
                       ))
                   .toList(),
@@ -99,16 +104,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _ModuleCard extends StatelessWidget {
-  const _ModuleCard({
-    required this.module,
-    required this.count,
-    required this.accent,
-    required this.onTap,
-  });
+  const _ModuleCard({required this.module, required this.count, required this.onTap});
 
   final DashboardModule module;
   final int count;
-  final Color accent;
   final VoidCallback onTap;
 
   @override
@@ -128,16 +127,16 @@ class _ModuleCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: accent.withOpacity(0.12),
+                      color: kBrandAccent.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(module.icon, color: accent),
+                    child: Icon(module.icon, color: kBrandAccent),
                   ),
                   if (count > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: accent,
+                        color: kBrandAccent,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('$count',

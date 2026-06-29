@@ -7,6 +7,7 @@ class AppUser {
     this.areaCode,
     this.capabilities = const Capabilities(),
     this.isSupplier = false,
+    this.role = 'plantex',
   });
 
   final int id;
@@ -15,15 +16,21 @@ class AppUser {
   final String? areaCode;
   final Capabilities capabilities;
   final bool isSupplier;
+  final String role; // 'plantex' | 'supplier' (from the API)
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
+    final isSupplier = json['is_supplier'] == true ||
+        json['role']?.toString() == 'supplier' ||
+        json['account_type']?.toString() == 'vendor';
     return AppUser(
       id: _int(json['id']),
       name: (json['name'] ?? '').toString(),
       email: (json['email'] ?? '').toString(),
       areaCode: json['area_code']?.toString(),
-      isSupplier: json['is_supplier'] == true ||
-          (json['account_type']?.toString() == 'vendor'),
+      isSupplier: isSupplier,
+      role: (json['role']?.toString().isNotEmpty == true)
+          ? json['role'].toString()
+          : (isSupplier ? 'supplier' : 'plantex'),
       capabilities: json['capabilities'] is Map
           ? Capabilities.fromJson(Map<String, dynamic>.from(json['capabilities']))
           : const Capabilities(),

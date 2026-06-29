@@ -1,43 +1,41 @@
 # Plantex Mobile (Flutter)
 
-Native Android + iOS apps for the **Plantex Shipment Module**, built from one Flutter codebase with **two flavors**:
+**One** native Android + iOS app for the **Plantex Shipment Module**. The role is chosen at **login**, not at build time — the login screen has two tabs:
 
-| Flavor | App | Audience | Default API host |
+| Login tab | Role | Audience | Modules shown |
 |---|---|---|---|
-| `shipment` | **Plantex Warehouse** | Internal warehouse staff | `https://plantex.work` |
-| `supplier` | **Plantex Vendor** | Suppliers / vendors | `https://supplier.plantex.work` |
+| **Login with Plantex** | `plantex` | Warehouse staff | All Shipments, Racking, Box Scanning, Kitting, Short Box, Short SKU |
+| **Login with Vendor** | `supplier` | Suppliers / vendors | All Shipments, Box Scanning, Kitting, Short Box, Short SKU, Invoices, Purchase Orders |
 
-It talks to the existing Laravel backend's mobile API (`/api/v1/mobile/*`, Sanctum bearer tokens). No business logic is duplicated — the app is a thin, attractive client over the same endpoints the PWA uses.
+Both use the **same backend** (`https://plantex.work` by default). The API returns the user's `role` + `capabilities` on login; the app routes and scopes data from that. Vendor data is auto-scoped server-side (vendor assignment). It talks to `/api/v1/mobile/*` (Sanctum bearer tokens) — same endpoints the PWA uses, no logic duplicated.
 
-> ⚠️ This repo currently contains the **Dart source only** (`lib/`, `pubspec.yaml`, configs). The native `android/` and `ios/` folders are NOT committed — generate them once with `flutter create .` (see Setup). That command fills in the platform shells without modifying `lib/`.
+> ⚠️ This repo contains the **Dart source only** (`lib/`, `pubspec.yaml`, configs). The native `android/` and `ios/` folders are NOT committed — generate them once with `flutter create .` (it fills the platform shells without touching `lib/`).
 
 ---
 
-## Setup (first time)
+## Setup → build (just two commands)
 
 ```bash
-# 1. Install Flutter SDK (stable channel): https://docs.flutter.dev/get-started/install
-flutter --version          # 3.22+ recommended
+# 1. one-time: generates android/ + ios/ and patches camera permission + minSdk
+bash setup.sh
 
-# 2. From this folder, materialize the native platform folders (keeps lib/ untouched)
-flutter create . --org work.plantex --platforms=android,ios --project-name plantex_mobile
-
-# 3. Install packages
-flutter pub get
-
-# 4. Run a flavor (compile-time selection via --dart-define)
-flutter run --dart-define=APP_FLAVOR=shipment
-flutter run --dart-define=APP_FLAVOR=supplier
-
-# point at a different backend (e.g. local/staging):
-flutter run --dart-define=APP_FLAVOR=shipment --dart-define=API_BASE_URL=http://10.0.2.2:8000
+# 2. build the APK
+flutter build apk --release
 ```
 
-`10.0.2.2` is the Android emulator's alias for the host machine's `localhost`.
+`setup.sh` runs `flutter create .` (native shells — the SDK must generate these, they can't be committed; it does NOT touch `lib/`), then `flutter pub get`, then adds the CAMERA permission (Android), `NSCameraUsageDescription` (iOS) and `minSdk 21` the barcode scanner needs. Requires the **Flutter SDK** in PATH (`flutter --version`, 3.22+).
+
+Other commands:
+```bash
+flutter run                                            # dev run (pick Plantex/Vendor on login)
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000   # point at local/staging backend
+flutter build ipa --release                            # iOS (on a Mac)
+```
+`10.0.2.2` is the Android emulator's alias for the host's `localhost`.
 
 ### Building releases
 ```bash
-flutter build apk   --dart-define=APP_FLAVOR=shipment --release
+flutter build apk --release
 flutter build ipa   --dart-define=APP_FLAVOR=supplier --release
 ```
 To give each flavor a distinct **app id / icon** (so both can be installed side-by-side), add Gradle product flavors (`android/app/build.gradle`) and iOS schemes — see `docs/FLAVORS.md` (TODO) or split into true `--flavor` builds. The Dart side already branches on `AppFlavor`.

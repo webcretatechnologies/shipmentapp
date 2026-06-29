@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../app/flavor.dart';
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
 import '../models/auth_models.dart';
@@ -43,23 +44,35 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// The role the user logged in as (from the API). Drives the dashboard.
+  AppRole get role => AppRoleX.fromApi(user?.role, isSupplier: user?.isSupplier);
+
   Future<bool> login({
     required String email,
     required String password,
-    required String deviceName,
+    required AppRole loginType, // which tab: Plantex or Vendor
   }) async {
     _set(busy: true, error: null);
     try {
       final data = await api.post(ApiEndpoints.login, body: {
         'email': email.trim(),
         'password': password,
-        'device_name': deviceName,
+        'device_name': loginType.deviceName,
       });
       final session = AuthSession.fromJson(Map<String, dynamic>.from(data as Map));
       if (session.token.isEmpty) {
         _set(busy: false, error: 'Login failed — no token returned.');
         return false;
       }
+
+      // Enforce the chosen tab against the actual account role.
+      if (loginType == AppRole.supplier && !session.user.isSupplier) {
+        _set(busy: false, error: 'This is not a vendor account. Use the Plantex tab.');
+        return false;
+      }
+      // (Plantex tab + a vendor account is already rejected by the API's
+      //  warehouse-scan permission gate, returning a clear 403 message.)
+
       await tokenStorage.save(session.token);
       user = session.user;
       _set(busy: false, status: AuthStatus.authenticated);
