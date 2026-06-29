@@ -1,0 +1,147 @@
+/// Helpers for tolerant JSON parsing (backend shapes vary).
+int asInt(dynamic v) => v is int ? v : int.tryParse('${v ?? ''}') ?? 0;
+String asStr(dynamic v) => (v ?? '').toString();
+bool asBool(dynamic v) => v == true || v == 1 || v == '1';
+
+/// A shipment row (list + detail).
+class Shipment {
+  Shipment({
+    required this.id,
+    required this.shipmentId,
+    required this.status,
+    this.vendor,
+    this.totalSkus = 0,
+    this.totalUnits = 0,
+    this.scannedUnits = 0,
+    this.areaCode,
+  });
+
+  final int id;
+  final String shipmentId; // the FBA code
+  final String status;
+  final String? vendor;
+  final int totalSkus;
+  final int totalUnits;
+  final int scannedUnits;
+  final String? areaCode;
+
+  double get progress => totalUnits == 0 ? 0 : (scannedUnits / totalUnits).clamp(0, 1);
+
+  factory Shipment.fromJson(Map<String, dynamic> json) => Shipment(
+        id: asInt(json['id']),
+        shipmentId: asStr(json['shipment_id']),
+        status: asStr(json['status']),
+        vendor: json['vendor']?.toString(),
+        totalSkus: asInt(json['total_sku'] ?? json['total_skus']),
+        totalUnits: asInt(json['total_units']),
+        scannedUnits: asInt(json['scanned_qty'] ?? json['scanned_units']),
+        areaCode: json['area_code']?.toString(),
+      );
+}
+
+/// A line item / expected product within a shipment.
+class ScanProduct {
+  ScanProduct({
+    required this.id,
+    required this.merchantSku,
+    required this.title,
+    required this.expected,
+    required this.scanned,
+    this.asin,
+    this.fnsku,
+    this.ean,
+    this.area,
+  });
+
+  final int id;
+  final String merchantSku;
+  final String title;
+  final int expected; // effective scan target
+  final int scanned;
+  final String? asin;
+  final String? fnsku;
+  final String? ean;
+  final String? area;
+
+  bool get complete => scanned >= expected && expected > 0;
+
+  factory ScanProduct.fromJson(Map<String, dynamic> json) => ScanProduct(
+        id: asInt(json['id']),
+        merchantSku: asStr(json['merchant_sku']),
+        title: asStr(json['title']),
+        expected: asInt(json['scan_target_qty'] ?? json['expected_qty'] ?? json['shipped']),
+        scanned: asInt(json['scanned_qty']),
+        asin: json['asin']?.toString(),
+        fnsku: json['fnsku']?.toString(),
+        ean: json['ean']?.toString(),
+        area: json['area']?.toString(),
+      );
+}
+
+/// Aggregated scan state for a shipment (`shipments/{id}/scan-state`).
+class ScanState {
+  ScanState({
+    required this.totalScanned,
+    required this.totalTarget,
+    required this.boxesScanned,
+    required this.boxesTotal,
+    this.products = const [],
+    this.kittingComplete = true,
+  });
+
+  final int totalScanned;
+  final int totalTarget;
+  final int boxesScanned;
+  final int boxesTotal;
+  final List<ScanProduct> products;
+  final bool kittingComplete;
+
+  factory ScanState.fromJson(Map<String, dynamic> json) {
+    final totals = json['totals'] is Map ? Map<String, dynamic>.from(json['totals']) : json;
+    final productsRaw = (json['products'] as List?) ?? const [];
+    final kitting = json['kitting'] is Map ? Map<String, dynamic>.from(json['kitting']) : null;
+    return ScanState(
+      totalScanned: asInt(totals['total_scanned']),
+      totalTarget: asInt(totals['total_shipped'] ?? totals['total_target']),
+      boxesScanned: asInt(totals['total_boxes_scanned']),
+      boxesTotal: asInt(totals['total_boxes_expected']),
+      products: productsRaw
+          .whereType<Map>()
+          .map((e) => ScanProduct.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      kittingComplete: kitting == null ? true : asBool(kitting['complete'] ?? kitting['kitting_complete']),
+    );
+  }
+}
+
+/// A racking-area box.
+class RackingBox {
+  RackingBox({
+    required this.id,
+    required this.boxBarcode,
+    required this.status,
+    this.shipmentId,
+    this.rackNo,
+    this.binNo,
+  });
+
+  final int id;
+  final String boxBarcode;
+  final String status; // pending / received / sent_to_box_scanning
+  final String? shipmentId;
+  final String? rackNo;
+  final String? binNo;
+
+  factory RackingBox.fromJson(Map<String, dynamic> json) {
+    // verified shape: shipment is nested {id, shipment_id, fc_name}
+    final ship = json['shipment'] is Map ? Map<String, dynamic>.from(json['shipment']) : null;
+    return RackingBox(
+      id: asInt(json['id']),
+      boxBarcode: asStr(json['box_barcode']),
+      status: asStr(json['status']),
+      shipmentId: ship?['shipment_id']?.toString() ?? json['shipment_id']?.toString(),
+      rackNo: json['rack_no']?.toString(),
+      binNo: json['bin_no']?.toString(),
+    );
+  }
+}

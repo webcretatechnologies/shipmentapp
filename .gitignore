@@ -1,0 +1,32 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+*.log
+
+# Generated native platform shells (run `flutter create .` to (re)generate)
+/android/
+/ios/
+/linux/
+/macos/
+/windows/
+/web/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+
+# secrets / env
+*.env
+**/google-services.json
+**/GoogleService-Info.plist
+**/key.properties
+**/*.keystore
+**/*.jks
