@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../app/app_config.dart';
+import '../../app/flavor.dart';
 import '../../core/auth/auth_controller.dart';
 
+/// Login with two tabs: "Login with Plantex" (warehouse) and
+/// "Login with Vendor" (supplier). The selected tab decides the role.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tab = TabController(length: 2, vsync: this)
+    ..addListener(() => setState(() {}));
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _obscure = true;
 
+  AppRole get _loginType => _tab.index == 1 ? AppRole.supplier : AppRole.plantex;
+
   @override
   void dispose() {
+    _tab.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -26,12 +33,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthController>();
-    final config = context.read<AppConfig>();
-    final deviceName = config.flavor.name == 'supplier' ? 'vendor-mobile' : 'warehouse-scan';
     final ok = await auth.login(
       email: _email.text,
       password: _password.text,
-      deviceName: deviceName,
+      loginType: _loginType,
     );
     if (!ok && mounted && auth.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -42,9 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final config = context.read<AppConfig>();
     final auth = context.watch<AuthController>();
-    final accent = config.flavorConfig.accent;
+    final isVendor = _loginType == AppRole.supplier;
 
     return Scaffold(
       body: SafeArea(
@@ -52,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 440),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -63,19 +67,49 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 72,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: accent.withOpacity(0.12),
+                        color: kBrandAccent.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Icon(Icons.local_shipping, color: accent, size: 36),
+                      child: const Icon(Icons.local_shipping, color: kBrandAccent, size: 36),
                     ),
-                    const SizedBox(height: 20),
-                    Text(config.flavorConfig.appTitle,
+                    const SizedBox(height: 18),
+                    const Text('Plantex Shipment',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 6),
-                    const Text('Sign in to continue',
-                        textAlign: TextAlign.center, style: TextStyle(color: Colors.black54)),
-                    const SizedBox(height: 28),
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 18),
+
+                    // ── role tabs ──
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF2F4),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TabBar(
+                        controller: _tab,
+                        indicator: BoxDecoration(
+                          color: kBrandAccent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        dividerColor: Colors.transparent,
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.black54,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        tabs: const [
+                          Tab(text: 'Login with Plantex'),
+                          Tab(text: 'Login with Vendor'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    Text(
+                      isVendor ? 'Vendor / Supplier sign-in' : 'Warehouse staff sign-in',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 18),
+
                     TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
@@ -109,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? const SizedBox(
                               height: 22, width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Login'),
+                          : Text(isVendor ? 'Login as Vendor' : 'Login as Plantex'),
                     ),
                   ],
                 ),

@@ -6,6 +6,7 @@ import '../core/auth/auth_controller.dart';
 import '../core/storage/token_storage.dart';
 import '../core/theme/app_theme.dart';
 import 'app_config.dart';
+import 'flavor.dart';
 import 'router.dart';
 
 /// Root widget. Wires DI (Provider), restores the session, builds the router.
@@ -42,9 +43,9 @@ class _PlantexAppState extends State<PlantexApp> {
         builder: (context) {
           final router = buildRouter(_auth);
           return MaterialApp.router(
-            title: widget.config.flavorConfig.appTitle,
+            title: 'Plantex Shipment',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(widget.config.flavorConfig.accent),
+            theme: AppTheme.light(kBrandAccent),
             routerConfig: router,
           );
         },

@@ -1,25 +1,14 @@
-import 'flavor.dart';
-
-/// Resolved runtime configuration, read from --dart-define values.
+/// Runtime configuration. One app, one backend — the role is decided at login,
+/// not here. Override the host for local/staging with:
+///   --dart-define=API_BASE_URL=http://10.0.2.2:8000
 class AppConfig {
-  AppConfig({required this.flavorConfig, required this.baseUrl});
+  AppConfig({required this.baseUrl});
 
-  final FlavorConfig flavorConfig;
   final String baseUrl;
 
-  AppFlavor get flavor => flavorConfig.flavor;
-
-  /// Built once at startup from compile-time defines.
   factory AppConfig.fromEnvironment() {
-    const rawFlavor = String.fromEnvironment('APP_FLAVOR', defaultValue: 'shipment');
-    final flavor = FlavorConfig.parse(rawFlavor);
-    final flavorConfig = FlavorConfig.of(flavor);
-
-    // API_BASE_URL override lets you point at local/staging without rebuilding flavors.
-    const overrideUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
-    final baseUrl = overrideUrl.isNotEmpty ? overrideUrl : flavorConfig.defaultBaseUrl;
-
-    return AppConfig(flavorConfig: flavorConfig, baseUrl: baseUrl);
+    const override = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    return AppConfig(baseUrl: override.isNotEmpty ? override : 'https://plantex.work');
   }
 
   /// Full mobile API root, e.g. https://plantex.work/api/v1/mobile
