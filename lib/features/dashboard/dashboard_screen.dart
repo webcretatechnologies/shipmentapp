@@ -8,6 +8,7 @@ import '../../core/api/api_endpoints.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/models/auth_models.dart';
 import '../../core/models/dashboard_counts.dart';
+import '../../core/widgets/pwa_app_bar.dart';
 
 /// A card is shown only if the logged-in user has access to that module —
 /// mirroring their admin-panel permissions (scan-only user sees only scanning,
@@ -74,8 +75,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(role.title),
+      appBar: pwaAppBar(
+        role.title,
+        subtitle: role.isSupplier ? 'Vendor' : 'Plantex',
+        back: false,
         actions: [
           PopupMenuButton<String>(
             onSelected: (v) {

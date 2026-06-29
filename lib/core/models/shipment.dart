@@ -78,6 +78,59 @@ class ScanProduct {
       );
 }
 
+/// A single product scan-log row (the "Scan log" tab — like the PWA).
+class ScanLogEntry {
+  ScanLogEntry({
+    required this.merchantSku,
+    required this.qty,
+    this.fnsku,
+    this.asin,
+    this.ean,
+    this.boxBarcode,
+    this.userName,
+    this.updatedAt,
+  });
+
+  final String merchantSku;
+  final int qty;
+  final String? fnsku;
+  final String? asin;
+  final String? ean;
+  final String? boxBarcode; // null => "Not in a box yet"
+  final String? userName;
+  final String? updatedAt;
+
+  factory ScanLogEntry.fromJson(Map<String, dynamic> j) => ScanLogEntry(
+        merchantSku: asStr(j['merchant_sku']),
+        qty: asInt(j['qty']),
+        fnsku: j['fnsku']?.toString(),
+        asin: j['asin']?.toString(),
+        ean: (j['ean'] ?? j['external_id'])?.toString(),
+        boxBarcode: j['box_barcode']?.toString(),
+        userName: j['user_name']?.toString(),
+        updatedAt: j['updated_at']?.toString(),
+      );
+}
+
+/// A box with its packed lines (the "Boxes (packing)" tab).
+class BoxLog {
+  BoxLog({required this.boxBarcode, required this.qty, this.rackingLabel, this.lines = const []});
+  final String boxBarcode;
+  final int qty;
+  final String? rackingLabel;
+  final List<ScanLogEntry> lines;
+
+  factory BoxLog.fromJson(Map<String, dynamic> j) => BoxLog(
+        boxBarcode: asStr(j['box_barcode']),
+        qty: asInt(j['qty_count'] ?? j['qty']),
+        rackingLabel: j['racking_label']?.toString(),
+        lines: ((j['products'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((e) => ScanLogEntry.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
+      );
+}
+
 /// Aggregated scan state for a shipment (`shipments/{id}/scan-state`).
 class ScanState {
   ScanState({
@@ -85,7 +138,11 @@ class ScanState {
     required this.totalTarget,
     required this.boxesScanned,
     required this.boxesTotal,
+    this.status = '',
+    this.areaCode,
     this.products = const [],
+    this.scanLog = const [],
+    this.boxLog = const [],
     this.kittingComplete = true,
   });
 
@@ -93,14 +150,23 @@ class ScanState {
   final int totalTarget;
   final int boxesScanned;
   final int boxesTotal;
-  final List<ScanProduct> products;
+  final String status;
+  final String? areaCode;
+  final List<ScanProduct> products; // "Expected" tab
+  final List<ScanLogEntry> scanLog; // "Scan log" tab
+  final List<BoxLog> boxLog; // "Boxes (packing)" tab
   final bool kittingComplete;
 
   factory ScanState.fromJson(Map<String, dynamic> json) {
     final totals = json['totals'] is Map ? Map<String, dynamic>.from(json['totals']) : json;
     final productsRaw = (json['products'] as List?) ?? const [];
+    final logRaw = (json['product_scan_log'] as List?) ?? const [];
+    final boxRaw = (json['box_scan_log'] as List?) ?? const [];
     final kitting = json['kitting'] is Map ? Map<String, dynamic>.from(json['kitting']) : null;
+    final ship = json['shipment'] is Map ? Map<String, dynamic>.from(json['shipment']) : null;
     return ScanState(
+      status: asStr(ship?['status']),
+      areaCode: ship?['area_code']?.toString(),
       totalScanned: asInt(totals['total_scanned']),
       totalTarget: asInt(totals['total_shipped'] ?? totals['total_target']),
       boxesScanned: asInt(totals['total_boxes_scanned']),
@@ -108,6 +174,14 @@ class ScanState {
       products: productsRaw
           .whereType<Map>()
           .map((e) => ScanProduct.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      scanLog: logRaw
+          .whereType<Map>()
+          .map((e) => ScanLogEntry.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      boxLog: boxRaw
+          .whereType<Map>()
+          .map((e) => BoxLog.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
       kittingComplete: kitting == null ? true : asBool(kitting['complete'] ?? kitting['kitting_complete']),
     );
