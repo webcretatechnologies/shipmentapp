@@ -6,6 +6,8 @@ import '../../app/app_config.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/widgets/async_view.dart';
+import '../../core/widgets/pwa_app_bar.dart';
+import 'purchase_order_detail_screen.dart';
 
 /// Purchase Orders (spec section 7): vendor views POs raised for them and opens
 /// the PO PDF. Endpoints: GET supplier/purchase-orders, GET …/{id}/pdf.
@@ -49,7 +51,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Purchase Orders')),
+      appBar: pwaAppBar('Purchase Orders', subtitle: 'Vendor'),
       body: AsyncView<List<dynamic>>(
         future: _future,
         onRetry: _reload,
@@ -80,6 +82,12 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                       icon: const Icon(Icons.picture_as_pdf_outlined),
                       onPressed: () => _openPdf('${po['id']}'),
                     ),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => PurchaseOrderDetailScreen(
+                        id: '${po['id']}',
+                        poNumber: '${po['po_number'] ?? 'PO'}',
+                      ),
+                    )),
                   ),
                 );
               },

@@ -7,6 +7,41 @@ enum AppRole { plantex, supplier }
 /// Brand accent (same for both roles).
 const Color kBrandAccent = Color(0xFF028894);
 
+/// PWA design tokens (copied from public/pwa/warehouse-scan/app.css) so the
+/// mobile app matches the warehouse PWA look exactly.
+class Pwa {
+  static const bg = Color(0xFFECF2F6);
+  static const card = Color(0xFFFFFFFF);
+  static const text = Color(0xFF0F172A);
+  static const muted = Color(0xFF64748B);
+  static const primary = Color(0xFF028894);
+  static const primaryDark = Color(0xFF026E78);
+  static const primaryMid = Color(0xFF03A0AD);
+  static const primaryLight = Color(0xFFE5F5F6);
+  static const primarySoft = Color(0xFFD7F2F4);
+  static const primaryBorder = Color(0xFF9EDBDF);
+  static const border = Color(0xFFD7E2EA);
+  static const success = Color(0xFF50CD89);
+  static const warning = Color(0xFFD97706);
+  static const danger = Color(0xFFF1416C);
+  static const radius = 14.0;
+
+  /// The PWA teal header gradient (145deg from→mid→to).
+  static const headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF026E78), Color(0xFF028894), Color(0xFF03A0AD)],
+    stops: [0.0, 0.55, 1.0],
+  );
+
+  /// White → primary-light card gradient used for counters/cards in the PWA.
+  static const cardGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFFFFF), Color(0xFFE5F5F6)],
+  );
+}
+
 extension AppRoleX on AppRole {
   bool get isSupplier => this == AppRole.supplier;
 

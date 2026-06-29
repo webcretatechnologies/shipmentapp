@@ -11,7 +11,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFF4F6F8),
+      scaffoldBackgroundColor: const Color(0xFFECF2F6), // Pwa.bg
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1A1A1A),
