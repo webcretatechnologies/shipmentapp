@@ -29,6 +29,7 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
   bool _loading = true;
   bool _scanning = false;
   int _tab = 0;
+  String _expectedSearch = '';
 
   String? _flashMsg;
   bool _flashOk = true;
@@ -59,7 +60,12 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
       final ok = res['success'] == true;
       _flash((res['message'] ?? res['status'] ?? (ok ? 'Scanned' : 'Failed')).toString(), ok: ok);
       if (res['scan_state'] is Map) {
-        setState(() => _state = ScanState.fromJson(Map<String, dynamic>.from(res['scan_state'])));
+        var ns = ScanState.fromJson(Map<String, dynamic>.from(res['scan_state']));
+        // keep the Expected list if the scan response didn't include products
+        if (ns.products.isEmpty && (_state?.products.isNotEmpty ?? false)) {
+          ns = ns.withProducts(_state!.products);
+        }
+        setState(() => _state = ns);
       } else {
         await _refresh();
       }
@@ -315,27 +321,65 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
     );
   }
 
-  // ── Expected tab ──
+  // ── Expected tab (with PWA search: SKU / FNSKU / ASIN / EAN) ──
   Widget _expectedTab(ScanState? s) {
-    final products = s?.products ?? const [];
-    if (products.isEmpty) return _empty('No expected items.');
+    final all = s?.products ?? const [];
+    if (all.isEmpty) return _empty('No expected items.');
+
+    final q = _expectedSearch.trim().toLowerCase();
+    final products = q.isEmpty
+        ? all
+        : all.where((p) {
+            bool has(String? v) => v != null && v.toLowerCase().contains(q);
+            return has(p.merchantSku) || has(p.title) || has(p.fnsku) || has(p.asin) || has(p.ean);
+          }).toList();
     final complete = products.where((p) => p.complete).length;
-    return RefreshIndicator(
-      onRefresh: _refresh,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-        itemCount: products.length + 1,
-        itemBuilder: (_, i) {
-          if (i == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8, left: 2),
-              child: Text('${products.length} expected · $complete complete',
-                  style: const TextStyle(fontSize: 12.5, color: Pwa.muted, fontWeight: FontWeight.w600)),
-            );
-          }
-          return _expectedCard(products[i - 1]);
-        },
-      ),
+
+    return Column(
+      children: [
+        // search bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          child: TextField(
+            onChanged: (v) => setState(() => _expectedSearch = v),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: 'Search SKU, FNSKU, ASIN…',
+              prefixIcon: const Icon(Icons.search, size: 20, color: Pwa.muted),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Pwa.border)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Pwa.border)),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Pwa.primary)),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('${products.length} expected · $complete complete'.toUpperCase(),
+                style: const TextStyle(
+                    fontSize: 11.5, color: Pwa.muted, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+          ),
+        ),
+        Expanded(
+          child: products.isEmpty
+              ? _empty('No items match “$_expectedSearch”.')
+              : RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                    itemCount: products.length,
+                    itemBuilder: (_, i) => _expectedCard(products[i]),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
