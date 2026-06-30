@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
+import '../../core/widgets/app_ui.dart';
 
 /// Vendor finance flow for one shipment (spec section 7): submit invoice (PDF) +
 /// transport (first vendor), then the last vendor seals the truck → INVOICED.
@@ -150,7 +151,7 @@ class _SupplierFinanceScreenState extends State<SupplierFinanceScreen> {
     final boxDone = s['box_scanning_done'] == true;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Finance · ${widget.shipment.shipmentId}')),
+      appBar: lightAppBar(context, 'Finance · ${widget.shipment.shipmentId}'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

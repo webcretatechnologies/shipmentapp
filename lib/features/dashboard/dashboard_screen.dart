@@ -8,7 +8,7 @@ import '../../core/api/api_endpoints.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/models/auth_models.dart';
 import '../../core/models/dashboard_counts.dart';
-import '../../core/widgets/pwa_app_bar.dart';
+import '../../core/widgets/app_ui.dart';
 
 /// A card is shown only if the logged-in user has access to that module —
 /// mirroring their admin-panel permissions (scan-only user sees only scanning,
@@ -75,74 +75,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .toList();
 
     return Scaffold(
-      appBar: pwaAppBar(
-        role.title,
-        subtitle: role.isSupplier ? 'Vendor' : 'Plantex',
-        back: false,
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (v) {
-              if (v == 'logout') auth.logout();
-            },
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                enabled: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(auth.user?.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
-                    Text(role.isSupplier ? 'Vendor' : 'Plantex',
-                        style: const TextStyle(fontSize: 12, color: Colors.black45)),
-                  ],
+      body: FutureBuilder<DashboardCounts>(
+        future: _future,
+        builder: (context, snap) {
+          final counts = snap.data ?? DashboardCounts();
+          return Column(
+            children: [
+              DarkHeader(
+                overline: role.isSupplier ? 'Vendor Portal' : 'Plantex Warehouse',
+                title: 'Dashboard',
+                trailing: DarkIconButton(
+                  icon: Icons.logout,
+                  tooltip: 'Logout',
+                  onTap: auth.logout,
+                ),
+                child: StatStrip(items: [
+                  StatItem('${counts.active}', 'Active', const Color(0xFFF97316)),
+                  StatItem('${counts.complete}', 'Complete', const Color(0xFF22C55E)),
+                  StatItem('${counts.pending}', 'Pending', const Color(0xFFF59E0B)),
+                ]),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: modules.isEmpty
+                      ? ListView(children: const [
+                          SizedBox(height: 120),
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                'No modules are assigned to your account.\nAsk an admin to grant access.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                            ),
+                          ),
+                        ])
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+                          children: [
+                            const SectionLabel('Quick Access'),
+                            GridView.count(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 14,
+                              crossAxisSpacing: 14,
+                              childAspectRatio: 1.05,
+                              children: modules
+                                  .map((m) => _ModuleCard(
+                                        module: m,
+                                        count: counts.forModule(m.name),
+                                        onTap: () => context.push(m.route),
+                                      ))
+                                  .toList(),
+                            ),
+                          ],
+                        ),
                 ),
               ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(value: 'logout', child: Text('Logout')),
             ],
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: CircleAvatar(radius: 16, child: Icon(Icons.person, size: 18)),
-            ),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: modules.isEmpty
-            ? ListView(children: const [
-                SizedBox(height: 120),
-                Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'No modules are assigned to your account.\nAsk an admin to grant access.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                  ),
-                ),
-              ])
-            : FutureBuilder<DashboardCounts>(
-          future: _future,
-          builder: (context, snap) {
-            final counts = snap.data ?? DashboardCounts();
-            return GridView.count(
-              padding: const EdgeInsets.all(16),
-              crossAxisCount: 2,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: 1.05,
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: modules
-                  .map((m) => _ModuleCard(
-                        module: m,
-                        count: counts.forModule(m.name),
-                        onTap: () => context.push(m.route),
-                      ))
-                  .toList(),
-            );
-          },
-        ),
+          );
+        },
       ),
     );
   }
@@ -157,46 +152,42 @@ class _ModuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final accent = module.accent;
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: kBrandAccent.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(module.icon, color: kBrandAccent),
-                  ),
-                  if (count > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: kBrandAccent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text('$count',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                    ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(module.icon, color: accent),
               ),
-              const Spacer(),
-              Text(module.label,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              const Text('Tap to open', style: TextStyle(color: Colors.black45, fontSize: 12)),
+              if (count > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('$count',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                ),
             ],
           ),
-        ),
+          const Spacer(),
+          Text(module.label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          const Text('Tap to open', style: TextStyle(color: Colors.black45, fontSize: 12)),
+        ],
       ),
     );
   }

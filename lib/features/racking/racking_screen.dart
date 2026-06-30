@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/scan_field.dart';
 
@@ -215,47 +217,57 @@ class _RackingScreenState extends State<RackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const filters = [
+      ('pending', 'Pending'),
+      ('received', 'Received'),
+      ('sent_to_box_scanning', 'Sent to Scanning'),
+    ];
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Racking Area'),
+      appBar: lightAppBar(
+        context,
+        'Racking Area',
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(96),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: ScanField(
-                  hint: 'Scan box barcode',
-                  onSubmit: (code) async {
-                    try {
-                      final data = await _api.get(ApiEndpoints.rackingLookup, query: {'barcode': code});
-                      final m = data is Map && data['data'] is Map
-                          ? Map<String, dynamic>.from(data['data'])
-                          : (data is Map ? Map<String, dynamic>.from(data) : null);
-                      if (m != null) _receiveBox(RackingBox.fromJson(m));
-                    } catch (e) {
-                      _toast('$e', error: true);
-                    }
-                  },
+          preferredSize: const Size.fromHeight(104),
+          child: Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: ScanField(
+                    hint: 'Scan box barcode',
+                    onSubmit: (code) async {
+                      try {
+                        final data = await _api.get(ApiEndpoints.rackingLookup, query: {'barcode': code});
+                        final m = data is Map && data['data'] is Map
+                            ? Map<String, dynamic>.from(data['data'])
+                            : (data is Map ? Map<String, dynamic>.from(data) : null);
+                        if (m != null) _receiveBox(RackingBox.fromJson(m));
+                      } catch (e) {
+                        _toast('$e', error: true);
+                      }
+                    },
+                  ),
                 ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: ['pending', 'received', 'sent_to_box_scanning'].map((s) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(
-                        label: Text(s.replaceAll('_', ' ')),
-                        selected: _status == s,
-                        onSelected: (_) => _setStatus(s),
-                      ),
-                    );
-                  }).toList(),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Row(
+                    children: [
+                      for (final (value, label) in filters)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _FilterPill(
+                            label: label,
+                            selected: _status == value,
+                            onTap: () => _setStatus(value),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -278,6 +290,41 @@ class _RackingScreenState extends State<RackingScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Pill-style status filter (active = orange filled, inactive = white border).
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({required this.label, required this.selected, required this.onTap});
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? Pwa.primary : Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: selected ? Pwa.primary : Pwa.border),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: selected ? Colors.white : Pwa.muted,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -354,7 +401,7 @@ class _StatusBadge extends StatelessWidget {
     final (bg, fg) = switch (status) {
       'pending' => (const Color(0xFFFEF3C7), const Color(0xFF92400E)),
       'received' => (const Color(0xFFD1FAE5), const Color(0xFF065F46)),
-      _ => (const Color(0xFFE5F5F6), const Color(0xFF026E78)),
+      _ => (const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

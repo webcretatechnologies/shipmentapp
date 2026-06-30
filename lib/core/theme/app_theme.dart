@@ -11,16 +11,17 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFECF2F6), // Pwa.bg
+      scaffoldBackgroundColor: const Color(0xFFF1F5F9), // Pwa.bg
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
+        scrolledUnderElevation: 0.5,
         centerTitle: false,
         titleTextStyle: const TextStyle(
-          color: Color(0xFF1A1A1A),
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
         ),
       ),
       cardTheme: CardThemeData(
@@ -59,21 +60,24 @@ class AppTheme {
     );
   }
 
-  /// Status → color, mirroring the web badges.
+  /// Status → foreground color, mirroring the web badges.
   static Color statusColor(String status) {
     final s = status.toUpperCase();
     if (s.contains('COMPLETE') || s.contains('CLOSED') || s.contains('LOADED') || s.contains('APPROVED')) {
-      return const Color(0xFF1B9C4A);
+      return const Color(0xFF16A34A);
     }
     if (s.contains('REJECT') || s.contains('CANCEL') || s.contains('SHORT')) {
-      return const Color(0xFFD64545);
+      return const Color(0xFFDC2626);
     }
-    if (s.contains('RELEASE') || s.contains('PROGRESS') || s.contains('PROCESS') || s.contains('TRANSIT')) {
-      return const Color(0xFFE08A00);
+    if (s.contains('RELEASE') || s.contains('PROGRESS') || s.contains('PROCESS') || s.contains('TRANSIT') || s.contains('PENDING')) {
+      return const Color(0xFFD97706);
     }
-    if (s.contains('INVOICED') || s.contains('RACKING')) {
-      return const Color(0xFF2F6FED);
+    if (s.contains('INVOICED') || s.contains('RACKING') || s.contains('OPEN')) {
+      return const Color(0xFF2563EB);
     }
-    return const Color(0xFF5B6470);
+    return const Color(0xFF475569);
   }
+
+  /// Soft background tint for a status pill (12% of the foreground color).
+  static Color statusBg(String status) => statusColor(status).withOpacity(0.12);
 }

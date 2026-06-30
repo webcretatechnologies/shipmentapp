@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import '../shipments/shipments_repository.dart';
 
@@ -37,7 +39,7 @@ class _KittingScreenState extends State<KittingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Kitting Process')),
+      appBar: lightAppBar(context, 'Kitting Process'),
       body: AsyncView<List<Shipment>>(
         future: _future,
         onRetry: _reload,
@@ -48,16 +50,30 @@ class _KittingScreenState extends State<KittingScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => Card(
-                child: ListTile(
-                  leading: const Icon(Icons.dashboard_customize_outlined),
-                  title: Text(items[i].shipmentId, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: Text(items[i].status),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => KittingDetailScreen(shipment: items[i]),
-                  )),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, i) => AppCard(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => KittingDetailScreen(shipment: items[i]),
+                )),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.dashboard_customize_outlined, color: Color(0xFFF59E0B)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(items[i].shipmentId,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                    ),
+                    StatusPill(items[i].status),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.chevron_right, color: Pwa.muted),
+                  ],
                 ),
               ),
             ),
@@ -158,15 +174,7 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Kitting · ${widget.shipment.shipmentId}'),
-        actions: [
-          TextButton(
-            onPressed: _busy ? null : _mergeAll,
-            child: const Text('Merge all', style: TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
+      appBar: lightAppBar(context, 'Kitting · ${widget.shipment.shipmentId}'),
       body: AsyncView<Map<String, dynamic>>(
         future: _future,
         onRetry: _reload,
@@ -177,46 +185,41 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
-            child: ListView.separated(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: entries.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) {
-                final e = Map<String, dynamic>.from(entries[i] as Map);
-                final toKit = asInt(e['to_kit']);
-                final merged = e['merged'] == true;
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${e['merchant_sku'] ?? e['combo_sku_code'] ?? ''}',
-                            style: const TextStyle(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 8),
-                        Wrap(spacing: 12, runSpacing: 4, children: [
-                          _chip('Ordered', '${asInt(e['qty_ordered'])}'),
-                          _chip('Hard bundled', '${asInt(e['hard_bundle_qty'])}'),
-                          _chip('Kitted', '${asInt(e['kitted_qty'])}'),
-                          _chip('To kit', '$toKit'),
-                          _chip('Status', '${e['status'] ?? ''}'),
-                        ]),
-                        if (!merged && toKit > 0) ...[
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: OutlinedButton.icon(
-                              onPressed: _busy ? null : () => _hardBundle(e),
-                              icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                              label: const Text('Hard bundle'),
-                            ),
+              children: [
+                AppCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(widget.shipment.shipmentId,
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                           ),
+                          StatusPill(widget.shipment.status),
                         ],
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 14),
+                      for (final raw in entries) _entryCard(Map<String, dynamic>.from(raw as Map)),
+                      const SizedBox(height: 4),
+                      OutlinedButton.icon(
+                        onPressed: _busy ? null : _mergeAll,
+                        icon: const Icon(Icons.merge_type, size: 18),
+                        label: const Text('Merge All'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(46),
+                          foregroundColor: Pwa.text,
+                          side: const BorderSide(color: Pwa.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ],
             ),
           );
         },
@@ -224,8 +227,56 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
     );
   }
 
-  Widget _chip(String l, String v) => Chip(
-        label: Text('$l: $v', style: const TextStyle(fontSize: 12)),
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  Widget _entryCard(Map<String, dynamic> e) {
+    final toKit = asInt(e['to_kit']);
+    final merged = e['merged'] == true;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Pwa.bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Pwa.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('${e['merchant_sku'] ?? e['combo_sku_code'] ?? ''}',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+          const SizedBox(height: 10),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            _chip('Ordered', '${asInt(e['qty_ordered'])}', Pwa.muted),
+            _chip('Kitted', '${asInt(e['kitted_qty'])}', const Color(0xFF16A34A)),
+            _chip('To Kit', '$toKit', toKit > 0 ? const Color(0xFFEA580C) : Pwa.muted),
+          ]),
+          if (!merged && toKit > 0) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _busy ? null : () => _hardBundle(e),
+                icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                label: const Text('Hard Bundle'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String l, String v, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Pwa.border),
+        ),
+        child: Text.rich(TextSpan(children: [
+          TextSpan(text: '$l: ', style: const TextStyle(fontSize: 12, color: Pwa.muted)),
+          TextSpan(
+              text: v,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+        ])),
       );
 }

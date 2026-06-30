@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/shipment.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import 'shipments_repository.dart';
 
@@ -47,7 +48,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: lightAppBar(context, widget.title),
       body: Column(
         children: [
           if (widget.source == ShipmentSource.all)
@@ -104,54 +105,42 @@ class _ShipmentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = AppTheme.statusColor(shipment.status);
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    return AppCard(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(shipment.shipmentId,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(shipment.status,
-                        style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12)),
-                  ),
-                ],
+              Expanded(
+                child: Text(shipment.shipmentId,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _stat('SKUs', '${shipment.totalSkus}'),
-                  _stat('Units', '${shipment.totalUnits}'),
-                  _stat('Scanned', '${shipment.scannedUnits}'),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: shipment.progress,
-                  minHeight: 6,
-                  backgroundColor: Colors.grey.shade200,
-                  color: color,
-                ),
-              ),
+              const SizedBox(width: 8),
+              StatusPill(shipment.status),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _stat('SKUs', '${shipment.totalSkus}'),
+              _stat('Units', '${shipment.totalUnits}'),
+              _stat('Scanned', '${shipment.scannedUnits}'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: shipment.progress,
+              minHeight: 7,
+              backgroundColor: const Color(0xFFE2E8F0),
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

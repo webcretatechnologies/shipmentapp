@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 
 /// Short SKU Request (spec section 3): pick shortage items + reason and submit.
@@ -59,7 +60,7 @@ class _ShortSkuScreenState extends State<ShortSkuScreen> {
   Widget build(BuildContext context) {
     if (widget.shipmentId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Short SKU Requests')),
+        appBar: lightAppBar(context, 'Short SKU Requests'),
         body: const Center(
           child: Padding(
             padding: EdgeInsets.all(24),
@@ -70,7 +71,7 @@ class _ShortSkuScreenState extends State<ShortSkuScreen> {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('Short SKU Request')),
+      appBar: lightAppBar(context, 'Short SKU Request'),
       body: AsyncView<Map<String, dynamic>>(
         future: _future,
         builder: (_, data) {
