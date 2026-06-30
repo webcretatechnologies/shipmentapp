@@ -83,8 +83,6 @@ List<DashboardModule> modulesForRole(AppRole role) {
       DashboardModule.shipments,
       DashboardModule.boxScanning,
       DashboardModule.kitting,
-      DashboardModule.shortBox,
-      DashboardModule.shortSku,
       DashboardModule.invoices,
       DashboardModule.purchaseOrders,
     ];
@@ -95,7 +93,5 @@ List<DashboardModule> modulesForRole(AppRole role) {
     DashboardModule.racking,
     DashboardModule.boxScanning,
     DashboardModule.kitting,
-    DashboardModule.shortBox,
-    DashboardModule.shortSku,
   ];
 }
