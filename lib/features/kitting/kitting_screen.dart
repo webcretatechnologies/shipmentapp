@@ -60,10 +60,10 @@ class _KittingScreenState extends State<KittingScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withOpacity(0.12),
+                        color: const Color(0xFF0FAFBF).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.dashboard_customize_outlined, color: Color(0xFFF59E0B)),
+                      child: const Icon(Icons.dashboard_customize_outlined, color: Color(0xFF0FAFBF)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -247,7 +247,7 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
           Wrap(spacing: 8, runSpacing: 8, children: [
             _chip('Ordered', '${asInt(e['qty_ordered'])}', Pwa.muted),
             _chip('Kitted', '${asInt(e['kitted_qty'])}', const Color(0xFF16A34A)),
-            _chip('To Kit', '$toKit', toKit > 0 ? const Color(0xFFEA580C) : Pwa.muted),
+            _chip('To Kit', '$toKit', toKit > 0 ? const Color(0xFF0C8E9C) : Pwa.muted),
           ]),
           if (!merged && toKit > 0) ...[
             const SizedBox(height: 12),

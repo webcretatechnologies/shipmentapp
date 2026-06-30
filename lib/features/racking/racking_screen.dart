@@ -401,7 +401,7 @@ class _StatusBadge extends StatelessWidget {
     final (bg, fg) = switch (status) {
       'pending' => (const Color(0xFFFEF3C7), const Color(0xFF92400E)),
       'received' => (const Color(0xFFD1FAE5), const Color(0xFF065F46)),
-      _ => (const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
+      _ => (const Color(0xFFE6F8FA), const Color(0xFF0C8E9C)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

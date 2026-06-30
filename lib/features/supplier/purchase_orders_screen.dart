@@ -97,8 +97,8 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                           Expanded(
                             child: FilledButton(
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.12),
-                                foregroundColor: const Color(0xFF7C3AED),
+                                backgroundColor: const Color(0xFF0FAFBF).withOpacity(0.12),
+                                foregroundColor: const Color(0xFF0C8E9C),
                                 elevation: 0,
                               ),
                               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
