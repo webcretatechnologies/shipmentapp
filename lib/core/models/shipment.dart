@@ -186,6 +186,21 @@ class ScanState {
       kittingComplete: kitting == null ? true : asBool(kitting['complete'] ?? kitting['kitting_complete']),
     );
   }
+
+  /// Returns a copy with the given products — used to preserve the "Expected"
+  /// list when a scan response omits products.
+  ScanState withProducts(List<ScanProduct> p) => ScanState(
+        totalScanned: totalScanned,
+        totalTarget: totalTarget,
+        boxesScanned: boxesScanned,
+        boxesTotal: boxesTotal,
+        status: status,
+        areaCode: areaCode,
+        products: p,
+        scanLog: scanLog,
+        boxLog: boxLog,
+        kittingComplete: kittingComplete,
+      );
 }
 
 /// A racking-area box.
