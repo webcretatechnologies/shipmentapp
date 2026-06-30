@@ -49,6 +49,15 @@ class _ScanFieldState extends State<ScanField> {
 
   @override
   Widget build(BuildContext context) {
+    // PWA .ws-scan-input: 2px #9edbdf border, radius 12, bg #e5f5f6,
+    // 1.05rem/600 text, focus -> #026e78 border + glow.
+    const fill = Color(0xFFE5F5F6);
+    const borderColor = Color(0xFF9EDBDF);
+    const focusColor = Color(0xFF026E78);
+    OutlineInputBorder b(Color c, double w) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c, width: w),
+        );
     return Row(
       children: [
         Expanded(
@@ -59,19 +68,33 @@ class _ScanFieldState extends State<ScanField> {
             autofocus: true,
             textInputAction: TextInputAction.go,
             onSubmitted: _submit,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\n'))],
             decoration: InputDecoration(
               hintText: widget.hint,
-              prefixIcon: const Icon(Icons.qr_code_scanner),
+              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+              filled: true,
+              fillColor: fill,
+              prefixIcon: const Icon(Icons.qr_code_scanner, color: focusColor),
+              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+              enabledBorder: b(borderColor, 2),
+              border: b(borderColor, 2),
+              focusedBorder: b(focusColor, 2),
             ),
           ),
         ),
         const SizedBox(width: 8),
         SizedBox(
-          height: 52,
+          height: 54,
+          width: 54,
           child: FilledButton(
+            style: FilledButton.styleFrom(
+              padding: EdgeInsets.zero,
+              backgroundColor: const Color(0xFF028894),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: widget.enabled ? _openCamera : null,
-            child: const Icon(Icons.photo_camera),
+            child: const Icon(Icons.photo_camera, size: 22),
           ),
         ),
       ],
