@@ -4,12 +4,9 @@
 build/
 .flutter-plugins
 .flutter-plugins-dependencies
-pubspec.lock
 *.log
 
 # Generated native platform shells (run `flutter create .` to (re)generate)
-/android/
-/ios/
 /linux/
 /macos/
 /windows/
