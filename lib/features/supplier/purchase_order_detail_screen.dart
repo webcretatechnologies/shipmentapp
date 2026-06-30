@@ -13,6 +13,7 @@ import '../../core/widgets/pwa_app_bar.dart';
 /// GET supplier/purchase-orders/{id}, with a button to open the PDF.
 class PurchaseOrderDetailScreen extends StatefulWidget {
   const PurchaseOrderDetailScreen({super.key, required this.id, required this.poNumber});
+
   final String id;
   final String poNumber;
 
