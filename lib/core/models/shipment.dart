@@ -195,16 +195,22 @@ class RackingBox {
     required this.boxBarcode,
     required this.status,
     this.shipmentId,
+    this.fcName,
     this.rackNo,
     this.binNo,
+    this.dockNumber,
+    this.totalUnits = 0,
   });
 
   final int id;
   final String boxBarcode;
   final String status; // pending / received / sent_to_box_scanning
   final String? shipmentId;
+  final String? fcName;
   final String? rackNo;
   final String? binNo;
+  final String? dockNumber;
+  final int totalUnits;
 
   factory RackingBox.fromJson(Map<String, dynamic> json) {
     // verified shape: shipment is nested {id, shipment_id, fc_name}
@@ -214,8 +220,11 @@ class RackingBox {
       boxBarcode: asStr(json['box_barcode']),
       status: asStr(json['status']),
       shipmentId: ship?['shipment_id']?.toString() ?? json['shipment_id']?.toString(),
+      fcName: ship?['fc_name']?.toString() ?? json['fc_name']?.toString(),
       rackNo: json['rack_no']?.toString(),
       binNo: json['bin_no']?.toString(),
+      dockNumber: json['dock_number']?.toString(),
+      totalUnits: asInt(json['total_units']),
     );
   }
 }

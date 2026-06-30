@@ -12,12 +12,14 @@ PreferredSizeWidget pwaAppBar(
 }) {
   return AppBar(
     automaticallyImplyLeading: back,
-    backgroundColor: Colors.transparent,
+    backgroundColor: Pwa.primaryDark,
     foregroundColor: Colors.white,
     elevation: 0,
     iconTheme: const IconThemeData(color: Colors.white),
     actionsIconTheme: const IconThemeData(color: Colors.white),
-    flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: Pwa.headerGradient)),
+    // Container (not DecoratedBox) fills the flexibleSpace so the gradient
+    // actually paints; primaryDark above is a solid fallback.
+    flexibleSpace: Container(decoration: const BoxDecoration(gradient: Pwa.headerGradient)),
     title: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
