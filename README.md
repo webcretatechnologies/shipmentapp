@@ -42,6 +42,29 @@ To give each flavor a distinct **app id / icon** (so both can be installed side-
 
 ---
 
+## CI/CD & Automated Downloads (No Local Setup Required)
+
+To make it easy for your team to download and test the app without having to set up Flutter, Java, or Android SDKs locally, a GitHub Actions workflow is configured to build the APK automatically.
+
+### How to download the APK:
+
+1. **Via GitHub Actions (Latest Builds)**:
+   - Go to the **Actions** tab in your GitHub repository.
+   - Click on the latest workflow run under the **Build Android APK** workflow.
+   - Scroll down to the **Artifacts** section at the bottom of the page.
+   - Download the `plantex-mobile-apk` zip file, extract it, and install the `app-release.apk` on your device.
+
+2. **Via GitHub Releases (Official/Tagged Versions)**:
+   - To publish a official/tagged release, simply create and push a git tag starting with `v` (e.g., `v1.0.0`):
+     ```bash
+     git tag v1.0.0
+     git push origin v1.0.0
+     ```
+   - GitHub Actions will automatically detect the tag, build the APK, create a new GitHub Release with the name `v1.0.0`, and attach the APK directly to the release.
+   - Team members can navigate to the **Releases** page of your GitHub repository to download the APK directly.
+
+---
+
 ## Architecture
 
 ```
