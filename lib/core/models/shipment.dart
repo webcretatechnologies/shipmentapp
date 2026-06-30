@@ -167,8 +167,11 @@ class ScanState {
     return ScanState(
       status: asStr(ship?['status']),
       areaCode: ship?['area_code']?.toString(),
-      totalScanned: asInt(totals['total_scanned']),
-      totalTarget: asInt(totals['total_shipped'] ?? totals['total_target']),
+      // Read the SAME fields the PWA renders: prefer the area-scoped values from
+      // the shipment summary (area_scanned_qty / area_target_qty), then fall back
+      // to the global totals. This keeps the mobile app identical to the PWA.
+      totalScanned: asInt(ship?['area_scanned_qty'] ?? totals['total_scanned']),
+      totalTarget: asInt(ship?['area_target_qty'] ?? totals['total_shipped'] ?? totals['total_target']),
       boxesScanned: asInt(totals['total_boxes_scanned']),
       boxesTotal: asInt(totals['total_boxes_expected']),
       products: productsRaw
