@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/shipment.dart';
-import '../../core/widgets/pwa_app_bar.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/scan_field.dart';
 import 'short_sku_drawer.dart';
 import 'shipments_repository.dart';
@@ -88,21 +88,18 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
     final s = _state;
     return Scaffold(
       backgroundColor: Pwa.bg,
-      appBar: pwaAppBar(
-        widget.shipmentCode.isEmpty ? 'Scan' : widget.shipmentCode,
-        subtitle: s == null
-            ? 'Scanning in progress'
-            : '${(s.areaCode ?? '').isNotEmpty ? 'Area ${s.areaCode} · ' : ''}${s.status.replaceAll('_', ' ')}',
-        actions: [IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh, color: Colors.white))],
-      ),
       body: Column(
         children: [
-          _scanArea(s),
-          PwaSegmented(
-            tabs: const ['Scan log', 'Boxes', 'Expected'],
-            index: _tab,
-            onChanged: (i) => setState(() => _tab = i),
+          DarkHeader(
+            title: widget.shipmentCode.isEmpty ? 'Scan' : widget.shipmentCode,
+            subtitle: s == null
+                ? 'Scanning in progress'
+                : '${(s.areaCode ?? '').isNotEmpty ? 'Area ${s.areaCode} · ' : ''}${s.status.replaceAll('_', ' ')}',
+            onBack: () => Navigator.of(context).maybePop(),
+            trailing: DarkIconButton(icon: Icons.refresh, onTap: _refresh),
+            child: _scanArea(s),
           ),
+          _tabBar(),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -120,67 +117,84 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
     );
   }
 
-  // ── Sticky scan area (.ws-scan-sticky) ──
+  // ── Scan area, inside the dark header ──
   Widget _scanArea(ScanState? s) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: Pwa.cardGradient,
-        border: Border(bottom: BorderSide(color: Pwa.border)),
-      ),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              PwaCounter(label: 'Scanned', value: '${s?.totalScanned ?? 0}'),
-              const SizedBox(width: 8),
-              PwaCounter(label: 'Target', value: '${s?.totalTarget ?? 0}'),
-              const SizedBox(width: 8),
-              PwaCounter(label: 'Boxes', value: '${s?.boxesScanned ?? 0} / ${s?.boxesTotal ?? 0}'),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text('SCAN PRODUCT OR CLOSE BOX BARCODE',
-                style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: Pwa.primaryDark,
-                    letterSpacing: 0.4)),
-          ),
-          const SizedBox(height: 6),
-          ScanField(onSubmit: _onScan, enabled: !_scanning),
-          if (_flashMsg != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: _flashOk ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(_flashMsg!,
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: _flashOk ? const Color(0xFF166534) : const Color(0xFF991B1B),
-                      fontWeight: FontWeight.w500)),
-            ),
-          ],
+    return Column(
+      children: [
+        StatStrip(items: [
+          StatItem('${s?.totalScanned ?? 0}', 'Scanned', const Color(0xFFF97316)),
+          StatItem('${s?.totalTarget ?? 0}', 'Target', Colors.white),
+          StatItem('${s?.boxesScanned ?? 0}/${s?.boxesTotal ?? 0}', 'Boxes', const Color(0xFF22C55E)),
+        ]),
+        const SizedBox(height: 12),
+        ScanField(onSubmit: _onScan, enabled: !_scanning, dark: true, hint: 'Scan or type barcode + Enter'),
+        if (_flashMsg != null) ...[
           const SizedBox(height: 10),
-          SizedBox(
+          Container(
             width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Pwa.warning, // #d97706
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: _openShortSku,
-              child: const Text('Request short SKU',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: _flashOk ? const Color(0xFF14532D) : const Color(0xFF7F1D1D),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Text(_flashMsg!,
+                style: TextStyle(
+                    fontSize: 13,
+                    color: _flashOk ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+                    fontWeight: FontWeight.w500)),
           ),
+        ],
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Pwa.primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: _openShortSku,
+            child: const Text('Request Short SKU',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Underline segmented tabs (Scan Log / Boxes / Expected) ──
+  Widget _tabBar() {
+    const labels = ['Scan Log', 'Boxes', 'Expected'];
+    return Container(
+      color: Colors.white,
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: InkWell(
+                onTap: () => setState(() => _tab = i),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: _tab == i ? Pwa.primary : Colors.transparent,
+                        width: 2.5,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    labels[i],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: _tab == i ? Pwa.primary : Pwa.muted,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -228,14 +242,14 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
-              color: inBox ? Pwa.primarySoft : const Color(0xFFF1F5F9),
+              color: inBox ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(inBox ? 'In box: ${e.boxBarcode}' : 'Not in a box yet',
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: inBox ? Pwa.primaryDark : Pwa.muted)),
+                    color: inBox ? const Color(0xFF2563EB) : Pwa.muted)),
           ),
           if (e.userName != null || e.updatedAt != null) ...[
             const SizedBox(height: 6),

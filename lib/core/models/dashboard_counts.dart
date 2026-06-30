@@ -12,6 +12,9 @@ class DashboardCounts {
     this.kitting = 0,
     this.invoices = 0,
     this.purchaseOrders = 0,
+    this.active = 0,
+    this.complete = 0,
+    this.pending = 0,
   });
 
   final int shipments;
@@ -22,6 +25,13 @@ class DashboardCounts {
   final int kitting;
   final int invoices;
   final int purchaseOrders;
+
+  // Top stat strip (shipment lifecycle). 0 when the API omits them.
+  final int active;
+  final int complete;
+  final int pending;
+
+  bool get hasStrip => active > 0 || complete > 0 || pending > 0;
 
   int forModule(String key) {
     switch (key) {
@@ -55,5 +65,8 @@ class DashboardCounts {
         kitting: asInt(json['kitting']),
         invoices: asInt(json['invoices']),
         purchaseOrders: asInt(json['purchase_orders']),
+        active: asInt(json['active']),
+        complete: asInt(json['complete']),
+        pending: asInt(json['pending']),
       );
 }

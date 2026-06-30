@@ -1,6 +1,9 @@
 /// Single source of truth for the backend mobile API paths.
 /// Mirrors `Modules/Shipment/routes/api.php` (prefix already on the Dio base URL).
 class ApiEndpoints {
+  // ---- App config (public — logo + name from admin settings) ----
+  static const appConfig = '/app-config';
+
   // ---- Auth ----
   static const login = '/auth/login';
   static const me = '/auth/me';

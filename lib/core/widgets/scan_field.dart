@@ -11,11 +11,15 @@ class ScanField extends StatefulWidget {
     required this.onSubmit,
     this.hint = 'Scan or enter barcode',
     this.enabled = true,
+    this.dark = false,
   });
 
   final void Function(String code) onSubmit;
   final String hint;
   final bool enabled;
+
+  /// Dark variant for placing the field on a navy header.
+  final bool dark;
 
   @override
   State<ScanField> createState() => _ScanFieldState();
@@ -49,11 +53,13 @@ class _ScanFieldState extends State<ScanField> {
 
   @override
   Widget build(BuildContext context) {
-    // PWA .ws-scan-input: 2px #9edbdf border, radius 12, bg #e5f5f6,
-    // 1.05rem/600 text, focus -> #026e78 border + glow.
-    const fill = Color(0xFFE5F5F6);
-    const borderColor = Color(0xFF9EDBDF);
-    const focusColor = Color(0xFF026E78);
+    const orange = Color(0xFFEA580C);
+    final dark = widget.dark;
+    final fill = dark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+    final borderColor = dark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0);
+    final textColor = dark ? Colors.white : const Color(0xFF0F172A);
+    final hintColor = dark ? Colors.white.withOpacity(0.5) : const Color(0xFF94A3B8);
+    final iconColor = dark ? Colors.white.withOpacity(0.7) : orange;
     OutlineInputBorder b(Color c, double w) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c, width: w),
@@ -68,29 +74,29 @@ class _ScanFieldState extends State<ScanField> {
             autofocus: true,
             textInputAction: TextInputAction.go,
             onSubmitted: _submit,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor),
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\n'))],
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+              hintStyle: TextStyle(color: hintColor, fontWeight: FontWeight.w500),
               filled: true,
               fillColor: fill,
-              prefixIcon: const Icon(Icons.qr_code_scanner, color: focusColor),
+              prefixIcon: Icon(Icons.qr_code_scanner, color: iconColor),
               contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-              enabledBorder: b(borderColor, 2),
-              border: b(borderColor, 2),
-              focusedBorder: b(focusColor, 2),
+              enabledBorder: b(borderColor, dark ? 1 : 1.2),
+              border: b(borderColor, dark ? 1 : 1.2),
+              focusedBorder: b(orange, 1.6),
             ),
           ),
         ),
         const SizedBox(width: 8),
         SizedBox(
-          height: 54,
-          width: 54,
+          height: 52,
+          width: 52,
           child: FilledButton(
             style: FilledButton.styleFrom(
               padding: EdgeInsets.zero,
-              backgroundColor: const Color(0xFF028894),
+              backgroundColor: orange,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: widget.enabled ? _openCamera : null,

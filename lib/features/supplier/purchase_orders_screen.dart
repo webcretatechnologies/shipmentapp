@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/app_config.dart';
+import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
-import '../../core/widgets/pwa_app_bar.dart';
 import 'purchase_order_detail_screen.dart';
 
 /// Purchase Orders (spec section 7): vendor views POs raised for them and opens
@@ -51,7 +52,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: pwaAppBar('Purchase Orders', subtitle: 'Vendor'),
+      appBar: lightAppBar(context, 'Purchase Orders'),
       body: AsyncView<List<dynamic>>(
         future: _future,
         onRetry: _reload,
@@ -64,30 +65,62 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
                 final po = Map<String, dynamic>.from(items[i] as Map);
-                return Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.assignment_outlined),
-                    title: Text('${po['po_number'] ?? 'PO #${po['id'] ?? ''}'}',
-                        style: const TextStyle(fontWeight: FontWeight.w700)),
-                    subtitle: Text([
-                      if (po['shipment_code'] != null) po['shipment_code'],
-                      '${po['items_count'] ?? 0} items',
-                      '${po['total_qty'] ?? 0} qty',
-                      if (po['po_date'] != null) po['po_date'],
-                    ].join(' · ')),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      onPressed: () => _openPdf('${po['id']}'),
-                    ),
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => PurchaseOrderDetailScreen(
-                        id: '${po['id']}',
-                        poNumber: '${po['po_number'] ?? 'PO'}',
+                final id = '${po['id']}';
+                final poNumber = '${po['po_number'] ?? 'PO #${po['id'] ?? ''}'}';
+                final meta = [
+                  if (po['shipment_code'] != null) po['shipment_code'],
+                  '${po['items_count'] ?? 0} items',
+                  '${po['total_qty'] ?? 0} qty',
+                  if (po['po_date'] != null) po['po_date'],
+                ].join(' · ');
+                return AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(poNumber,
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          ),
+                          StatusPill('${po['status'] ?? 'OPEN'}'),
+                        ],
                       ),
-                    )),
+                      const SizedBox(height: 6),
+                      Text(meta, style: const TextStyle(color: Pwa.muted, fontSize: 12.5)),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.12),
+                                foregroundColor: const Color(0xFF7C3AED),
+                                elevation: 0,
+                              ),
+                              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => PurchaseOrderDetailScreen(id: id, poNumber: poNumber),
+                              )),
+                              child: const Text('View Details'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(72, 52),
+                              foregroundColor: Pwa.text,
+                              side: const BorderSide(color: Pwa.border),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () => _openPdf(id),
+                            child: const Text('PDF'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 );
               },

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 
 /// Short Box Request (spec section 3). The backend takes a shipment-level
@@ -72,7 +73,7 @@ class _ShortBoxScreenState extends State<ShortBoxScreen> {
   Widget build(BuildContext context) {
     if (widget.shipmentId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Short Box Requests')),
+        appBar: lightAppBar(context, 'Short Box Requests'),
         body: const Center(
           child: Padding(
             padding: EdgeInsets.all(24),
@@ -83,7 +84,7 @@ class _ShortBoxScreenState extends State<ShortBoxScreen> {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('Short Box Request')),
+      appBar: lightAppBar(context, 'Short Box Request'),
       body: AsyncView<Map<String, dynamic>>(
         future: _future,
         builder: (_, data) {

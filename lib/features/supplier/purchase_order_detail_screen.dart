@@ -6,8 +6,8 @@ import '../../app/app_config.dart';
 import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
-import '../../core/widgets/pwa_app_bar.dart';
 
 /// Full PO detail (header totals + line items) for the vendor.
 /// GET supplier/purchase-orders/{id}, with a button to open the PDF.
@@ -51,7 +51,7 @@ class _PurchaseOrderDetailScreenState extends State<PurchaseOrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: pwaAppBar(widget.poNumber, subtitle: 'Purchase Order'),
+      appBar: lightAppBar(context, widget.poNumber),
       body: AsyncView<Map<String, dynamic>>(
         future: _future,
         onRetry: () => setState(() => _future = _load()),

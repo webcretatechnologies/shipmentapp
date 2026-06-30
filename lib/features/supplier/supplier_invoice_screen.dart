@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/models/shipment.dart';
+import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import '../shipments/shipments_repository.dart';
 import 'supplier_finance_screen.dart';
@@ -39,7 +40,7 @@ class _SupplierInvoiceScreenState extends State<SupplierInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Invoices')),
+      appBar: lightAppBar(context, 'Invoices'),
       body: AsyncView<List<Shipment>>(
         future: _future,
         onRetry: _reload,
@@ -56,20 +57,41 @@ class _SupplierInvoiceScreenState extends State<SupplierInvoiceScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: list.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => Card(
-                child: ListTile(
-                  leading: const Icon(Icons.receipt_long_outlined),
-                  title: Text(list[i].shipmentId, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: Text(list[i].status),
-                  trailing: FilledButton(
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => SupplierFinanceScreen(shipment: list[i]),
-                    )),
-                    child: const Text('Invoice'),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, i) {
+                final s = list[i];
+                return AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(s.shipmentId,
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          ),
+                          StatusPill(s.status),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text('${s.totalUnits} units · ${s.totalSkus} SKUs',
+                          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+                          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => SupplierFinanceScreen(shipment: s),
+                          )),
+                          icon: const Icon(Icons.upload_file, size: 18),
+                          label: const Text('Upload Invoice'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
           );
         },
