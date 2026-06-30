@@ -57,10 +57,10 @@ class _BoxScanningScreenState extends State<BoxScanningScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF22C55E).withOpacity(0.12),
+                        color: const Color(0xFF0FAFBF).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF22C55E)),
+                      child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF0FAFBF)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -156,7 +156,7 @@ class _BoxLoadingScreenState extends State<BoxLoadingScreen> {
               children: [
                 Expanded(child: _statCard('Loaded', '${scanned.length}', const Color(0xFF22C55E))),
                 const SizedBox(width: 12),
-                Expanded(child: _statCard('Pending', '${pending.length}', const Color(0xFFEA580C))),
+                Expanded(child: _statCard('Pending', '${pending.length}', const Color(0xFFF59E0B))),
               ],
             ),
           ),
@@ -185,7 +185,7 @@ class _BoxLoadingScreenState extends State<BoxLoadingScreen> {
 
   Widget _boxRow(dynamic b, bool done) {
     final code = b is Map ? '${b['box_barcode'] ?? b['barcode'] ?? b}' : '$b';
-    final color = done ? const Color(0xFF22C55E) : const Color(0xFFEA580C);
+    final color = done ? const Color(0xFF22C55E) : const Color(0xFF0FAFBF);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: AppCard(

@@ -90,7 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onTap: auth.logout,
                 ),
                 child: StatStrip(items: [
-                  StatItem('${counts.active}', 'Active', const Color(0xFFF97316)),
+                  StatItem('${counts.active}', 'Active', const Color(0xFF2BC4D4)),
                   StatItem('${counts.complete}', 'Complete', const Color(0xFF22C55E)),
                   StatItem('${counts.pending}', 'Pending', const Color(0xFFF59E0B)),
                 ]),

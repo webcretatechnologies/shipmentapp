@@ -122,7 +122,7 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
     return Column(
       children: [
         StatStrip(items: [
-          StatItem('${s?.totalScanned ?? 0}', 'Scanned', const Color(0xFFF97316)),
+          StatItem('${s?.totalScanned ?? 0}', 'Scanned', const Color(0xFF2BC4D4)),
           StatItem('${s?.totalTarget ?? 0}', 'Target', Colors.white),
           StatItem('${s?.boxesScanned ?? 0}/${s?.boxesTotal ?? 0}', 'Boxes', const Color(0xFF22C55E)),
         ]),
@@ -242,14 +242,14 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
-              color: inBox ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+              color: inBox ? Pwa.primaryLight : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(inBox ? 'In box: ${e.boxBarcode}' : 'Not in a box yet',
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: inBox ? const Color(0xFF2563EB) : Pwa.muted)),
+                    color: inBox ? Pwa.primaryDark : Pwa.muted)),
           ),
           if (e.userName != null || e.updatedAt != null) ...[
             const SizedBox(height: 6),

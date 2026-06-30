@@ -53,13 +53,13 @@ class _ScanFieldState extends State<ScanField> {
 
   @override
   Widget build(BuildContext context) {
-    const orange = Color(0xFFEA580C);
+    const brand = Color(0xFF0FAFBF);
     final dark = widget.dark;
     final fill = dark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
     final borderColor = dark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0);
     final textColor = dark ? Colors.white : const Color(0xFF0F172A);
     final hintColor = dark ? Colors.white.withOpacity(0.5) : const Color(0xFF94A3B8);
-    final iconColor = dark ? Colors.white.withOpacity(0.7) : orange;
+    final iconColor = dark ? Colors.white.withOpacity(0.7) : brand;
     OutlineInputBorder b(Color c, double w) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c, width: w),
@@ -85,7 +85,7 @@ class _ScanFieldState extends State<ScanField> {
               contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
               enabledBorder: b(borderColor, dark ? 1 : 1.2),
               border: b(borderColor, dark ? 1 : 1.2),
-              focusedBorder: b(orange, 1.6),
+              focusedBorder: b(brand, 1.6),
             ),
           ),
         ),
@@ -96,7 +96,7 @@ class _ScanFieldState extends State<ScanField> {
           child: FilledButton(
             style: FilledButton.styleFrom(
               padding: EdgeInsets.zero,
-              backgroundColor: orange,
+              backgroundColor: brand,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: widget.enabled ? _openCamera : null,

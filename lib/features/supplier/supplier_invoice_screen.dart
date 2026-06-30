@@ -80,7 +80,7 @@ class _SupplierInvoiceScreenState extends State<SupplierInvoiceScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
-                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0FAFBF)),
                           onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                             builder: (_) => SupplierFinanceScreen(shipment: s),
                           )),

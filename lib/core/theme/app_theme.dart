@@ -72,10 +72,10 @@ class AppTheme {
     if (s.contains('RELEASE') || s.contains('PROGRESS') || s.contains('PROCESS') || s.contains('TRANSIT') || s.contains('PENDING')) {
       return const Color(0xFFD97706);
     }
-    if (s.contains('INVOICED') || s.contains('RACKING') || s.contains('OPEN')) {
-      return const Color(0xFF2563EB);
+    if (s.contains('INVOICED') || s.contains('RACKING')) {
+      return const Color(0xFF0C8E9C); // teal
     }
-    return const Color(0xFF475569);
+    return const Color(0xFF475569); // slate (OPEN / default)
   }
 
   /// Soft background tint for a status pill (12% of the foreground color).

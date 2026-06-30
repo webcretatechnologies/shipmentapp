@@ -4,30 +4,29 @@ import 'package:flutter/material.dart';
 /// Chosen at LOGIN time (Plantex tab vs Vendor tab) — not at build time.
 enum AppRole { plantex, supplier }
 
-/// Brand accent — primary orange (same for both roles).
-const Color kBrandAccent = Color(0xFFEA580C);
+/// Brand accent — primary teal (same for both roles).
+const Color kBrandAccent = Color(0xFF0FAFBF);
 
-/// App design tokens. Orange brand + dark-navy headers, mirroring the mobile
-/// app mockups.
+/// App design tokens. Teal brand (#0FAFBF) + dark-navy headers.
 class Pwa {
   static const bg = Color(0xFFF1F5F9);
   static const card = Color(0xFFFFFFFF);
   static const text = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
 
-  // ── Orange brand ──
-  static const primary = Color(0xFFEA580C);
-  static const primaryDark = Color(0xFFC2410C);
-  static const primaryMid = Color(0xFFF97316);
-  static const primaryLight = Color(0xFFFFF1E9);
-  static const primarySoft = Color(0xFFFFE6D5);
-  static const primaryBorder = Color(0xFFFED7AA);
+  // ── Teal brand (#0FAFBF) ──
+  static const primary = Color(0xFF0FAFBF);
+  static const primaryDark = Color(0xFF0C8E9C);
+  static const primaryMid = Color(0xFF2BC4D4);
+  static const primaryLight = Color(0xFFE6F8FA);
+  static const primarySoft = Color(0xFFCDEFF3);
+  static const primaryBorder = Color(0xFF9BDFE7);
 
   static const border = Color(0xFFE2E8F0);
   static const success = Color(0xFF16A34A);
   static const warning = Color(0xFFD97706);
   static const danger = Color(0xFFDC2626);
-  static const info = Color(0xFF2563EB);
+  static const info = Color(0xFF0C8E9C);
   static const radius = 14.0;
 
   // ── Dark navy header ──
@@ -80,27 +79,8 @@ enum DashboardModule {
   final IconData icon;
   final String route;
 
-  /// Per-module accent used for the card icon tile + count badge.
-  Color get accent {
-    switch (this) {
-      case DashboardModule.shipments:
-        return const Color(0xFFEA580C); // orange
-      case DashboardModule.racking:
-        return const Color(0xFF3B82F6); // blue
-      case DashboardModule.boxScanning:
-        return const Color(0xFF22C55E); // green
-      case DashboardModule.kitting:
-        return const Color(0xFFF59E0B); // amber
-      case DashboardModule.shortSku:
-        return const Color(0xFFF59E0B); // amber
-      case DashboardModule.shortBox:
-        return const Color(0xFFF43F5E); // rose
-      case DashboardModule.invoices:
-        return const Color(0xFF3B82F6); // blue
-      case DashboardModule.purchaseOrders:
-        return const Color(0xFF8B5CF6); // purple
-    }
-  }
+  /// Per-module accent — single teal brand (#0FAFBF) for all cards.
+  Color get accent => const Color(0xFF0FAFBF);
 }
 
 /// Which cards each role sees.
