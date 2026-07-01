@@ -24,7 +24,25 @@ class ShipmentsRepository {
       if (search != null && search.isNotEmpty) 'search': search,
       'per_page': 50,
     });
-    return _parseList(data);
+    return _sortForList(_parseList(data));
+  }
+
+  /// Actively-scanning shipments first, then the rest in API order, HOLD last.
+  /// Stable within each group (preserves the backend's latest-first order).
+  List<Shipment> _sortForList(List<Shipment> items) {
+    int rank(String status) {
+      final s = status.toLowerCase();
+      if (s.contains('hold')) return 2; // hold at the bottom
+      if (s.contains('scan') || s.contains('progress') || s.contains('released')) return 0; // active first
+      return 1;
+    }
+
+    final indexed = items.asMap().entries.toList()
+      ..sort((a, b) {
+        final r = rank(a.value.status).compareTo(rank(b.value.status));
+        return r != 0 ? r : a.key.compareTo(b.key); // stable tie-break
+      });
+    return indexed.map((e) => e.value).toList();
   }
 
   Future<List<Shipment>> kittingShipments() async =>

@@ -6,6 +6,7 @@ import '../../core/api/api_client.dart';
 import '../../core/models/shipment.dart';
 import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/scan_field.dart';
+import 'product_label_drawer.dart';
 import 'short_sku_drawer.dart';
 import 'shipments_repository.dart';
 
@@ -56,8 +57,28 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
     if (_scanning) return;
     setState(() => _scanning = true);
     try {
-      final res = await _repo.scan(shipmentCode: widget.shipmentCode, barcode: code);
-      final ok = res['success'] == true;
+      var res = await _repo.scan(shipmentCode: widget.shipmentCode, barcode: code);
+
+      // First scan of a SKU whose label isn't confirmed yet: the backend returns
+      // a `product` + "upload the product label" message. Open the product/label
+      // drawer (like the PWA), then continue with its save-label response.
+      final msg = (res['message'] ?? '').toString();
+      if (res['product'] is Map &&
+          RegExp(r'product label|upload the product label', caseSensitive: false).hasMatch(msg)) {
+        final saved = await showProductLabelDrawer(
+          context,
+          shipmentCode: widget.shipmentCode,
+          product: Map<String, dynamic>.from(res['product'] as Map),
+          barcode: code,
+        );
+        if (saved == null) {
+          _flash('Label not saved — scan cancelled.', ok: false);
+          return;
+        }
+        res = saved; // save-label response carries the refreshed scan_state
+      }
+
+      final ok = res['success'] == true || res['status'] == 'success';
       _flash((res['message'] ?? res['status'] ?? (ok ? 'Scanned' : 'Failed')).toString(), ok: ok);
       if (res['scan_state'] is Map) {
         var ns = ScanState.fromJson(Map<String, dynamic>.from(res['scan_state']));
@@ -323,7 +344,9 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
 
   // ── Expected tab (with PWA search: SKU / FNSKU / ASIN / EAN) ──
   Widget _expectedTab(ScanState? s) {
-    final all = s?.products ?? const [];
+    // Only show scannable items. A SKU whose pick list hasn't been released has
+    // an effective target of 0 (gated) — like the admin scan flow, don't list it.
+    final all = (s?.products ?? const []).where((p) => p.expected > 0).toList();
     if (all.isEmpty) return _empty('No expected items.');
 
     final q = _expectedSearch.trim().toLowerCase();
