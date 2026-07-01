@@ -144,6 +144,10 @@ class ScanState {
     this.scanLog = const [],
     this.boxLog = const [],
     this.kittingComplete = true,
+    this.scanAllowed = true,
+    this.scanBlockHeading,
+    this.scanBlockMessage,
+    this.scanBlockStyle,
   });
 
   final int totalScanned;
@@ -157,6 +161,14 @@ class ScanState {
   final List<BoxLog> boxLog; // "Boxes (packing)" tab
   final bool kittingComplete;
 
+  // scan_access — mirrors the PWA. When scanAllowed is false the scan input is
+  // hidden and a banner (heading/message, coloured by style) is shown instead
+  // (e.g. shipment on HOLD, scanning complete, short-SKU pending).
+  final bool scanAllowed;
+  final String? scanBlockHeading;
+  final String? scanBlockMessage;
+  final String? scanBlockStyle; // warning | success | info
+
   factory ScanState.fromJson(Map<String, dynamic> json) {
     final totals = json['totals'] is Map ? Map<String, dynamic>.from(json['totals']) : json;
     final productsRaw = (json['products'] as List?) ?? const [];
@@ -164,9 +176,14 @@ class ScanState {
     final boxRaw = (json['box_scan_log'] as List?) ?? const [];
     final kitting = json['kitting'] is Map ? Map<String, dynamic>.from(json['kitting']) : null;
     final ship = json['shipment'] is Map ? Map<String, dynamic>.from(json['shipment']) : null;
+    final access = json['scan_access'] is Map ? Map<String, dynamic>.from(json['scan_access']) : null;
     return ScanState(
       status: asStr(ship?['status']),
       areaCode: ship?['area_code']?.toString(),
+      scanAllowed: access == null ? true : access['allowed'] != false,
+      scanBlockHeading: access?['heading']?.toString(),
+      scanBlockMessage: access?['message']?.toString(),
+      scanBlockStyle: access?['style']?.toString(),
       // Read the SAME fields the PWA renders: prefer the area-scoped values from
       // the shipment summary (area_scanned_qty / area_target_qty), then fall back
       // to the global totals. This keeps the mobile app identical to the PWA.
@@ -203,6 +220,10 @@ class ScanState {
         scanLog: scanLog,
         boxLog: boxLog,
         kittingComplete: kittingComplete,
+        scanAllowed: scanAllowed,
+        scanBlockHeading: scanBlockHeading,
+        scanBlockMessage: scanBlockMessage,
+        scanBlockStyle: scanBlockStyle,
       );
 }
 

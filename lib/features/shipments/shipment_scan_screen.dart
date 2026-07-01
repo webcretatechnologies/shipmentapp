@@ -146,6 +146,9 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
 
   // ── Scan area, inside the dark header ──
   Widget _scanArea(ScanState? s) {
+    // Scanning blocked (shipment on HOLD, scanning complete, short-SKU pending…)
+    // → hide the scan field + Request Short SKU and show the banner, like the PWA.
+    final blocked = s != null && !s.scanAllowed;
     return Column(
       children: [
         StatStrip(items: [
@@ -154,38 +157,73 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
           StatItem('${s?.boxesScanned ?? 0}/${s?.boxesTotal ?? 0}', 'Boxes', const Color(0xFF22C55E)),
         ]),
         const SizedBox(height: 12),
-        ScanField(onSubmit: _onScan, enabled: !_scanning, dark: true, hint: 'Scan or type barcode + Enter'),
-        if (_flashMsg != null) ...[
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: _flashOk ? const Color(0xFF14532D) : const Color(0xFF7F1D1D),
-              borderRadius: BorderRadius.circular(10),
+        if (blocked)
+          _scanBlockBanner(s)
+        else ...[
+          ScanField(onSubmit: _onScan, enabled: !_scanning, dark: true, hint: 'Scan or type barcode + Enter'),
+          if (_flashMsg != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: _flashOk ? const Color(0xFF14532D) : const Color(0xFF7F1D1D),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(_flashMsg!,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: _flashOk ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+                      fontWeight: FontWeight.w500)),
             ),
-            child: Text(_flashMsg!,
-                style: TextStyle(
-                    fontSize: 13,
-                    color: _flashOk ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
-                    fontWeight: FontWeight.w500)),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Pwa.primary,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: _openShortSku,
+              child: const Text('Request Short SKU',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+            ),
           ),
         ],
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Pwa.primary,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: _openShortSku,
-            child: const Text('Request Short SKU',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-          ),
-        ),
       ],
+    );
+  }
+
+  // Banner shown instead of the scan input when scanning is blocked.
+  Widget _scanBlockBanner(ScanState s) {
+    // Colour by the backend's style hint (warning / success / info).
+    Color bg, fg;
+    switch (s.scanBlockStyle) {
+      case 'success':
+        bg = const Color(0xFFDCFCE7); fg = const Color(0xFF166534); break;
+      case 'info':
+        bg = const Color(0xFFDBEAFE); fg = const Color(0xFF1E40AF); break;
+      case 'warning':
+      default:
+        bg = const Color(0xFFFEF3C7); fg = const Color(0xFF92400E);
+    }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(s.scanBlockHeading ?? 'Scanning disabled',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
+          if ((s.scanBlockMessage ?? '').isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(s.scanBlockMessage!, style: TextStyle(fontSize: 13, color: fg, height: 1.3)),
+          ],
+        ],
+      ),
     );
   }
 
