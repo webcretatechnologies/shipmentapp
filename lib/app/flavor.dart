@@ -88,8 +88,11 @@ List<DashboardModule> modulesForRole(AppRole role) {
   if (role == AppRole.supplier) {
     return const [
       DashboardModule.shipments,
+      DashboardModule.racking,
       DashboardModule.boxScanning,
       DashboardModule.kitting,
+      DashboardModule.shortSku,
+      DashboardModule.shortBox,
       DashboardModule.invoices,
       DashboardModule.purchaseOrders,
     ];
@@ -100,5 +103,7 @@ List<DashboardModule> modulesForRole(AppRole role) {
     DashboardModule.racking,
     DashboardModule.boxScanning,
     DashboardModule.kitting,
+    DashboardModule.shortSku,
+    DashboardModule.shortBox,
   ];
 }
