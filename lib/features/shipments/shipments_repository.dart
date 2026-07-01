@@ -63,14 +63,24 @@ class ShipmentsRepository {
 
   /// Sends a product/box barcode for a shipment. Returns the raw response map so
   /// the UI can read success/message + routed_to (box) + refreshed scan_state.
+  ///
+  /// The scan endpoint returns a STRUCTURED body even on 422 — e.g. the
+  /// "label needed" response carries `product` + `message` + `scan_state`. Dio
+  /// throws on 422, so we catch it and return that body, letting the UI react
+  /// (open the product-label drawer) instead of treating it as a hard error.
   Future<Map<String, dynamic>> scan({
     required String shipmentCode,
     required String barcode,
   }) async {
-    final data = await api.post(ApiEndpoints.scan, body: {
-      'shipment_id': shipmentCode,
-      'barcode': barcode,
-    });
-    return data is Map ? Map<String, dynamic>.from(data) : {'success': false};
+    try {
+      final data = await api.post(ApiEndpoints.scan, body: {
+        'shipment_id': shipmentCode,
+        'barcode': barcode,
+      });
+      return data is Map ? Map<String, dynamic>.from(data) : {'success': false};
+    } on ApiException catch (e) {
+      if (e.data is Map) return Map<String, dynamic>.from(e.data as Map);
+      return {'success': false, 'message': e.message};
+    }
   }
 }
