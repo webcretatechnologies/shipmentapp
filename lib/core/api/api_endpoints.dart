@@ -33,6 +33,7 @@ class ApiEndpoints {
   static String supplierSendToFinance(String id) => '/supplier/shipments/$id/send-to-finance';
   static String supplierSealTruck(String id) => '/supplier/shipments/$id/seal-truck';
   static String supplierDispatch(String id) => '/supplier/shipments/$id/dispatch';
+  static String supplierGatePass(String id) => '/supplier/shipments/$id/gate-pass';
   static const supplierPurchaseOrders = '/supplier/purchase-orders';
   static String supplierPoDetail(String id) => '/supplier/purchase-orders/$id';
   static String supplierPoPdf(String id) => '/supplier/purchase-orders/$id/pdf';

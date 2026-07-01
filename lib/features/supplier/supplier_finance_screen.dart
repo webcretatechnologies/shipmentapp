@@ -2,7 +2,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../app/app_config.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
@@ -37,6 +39,8 @@ class _SupplierFinanceScreenState extends State<SupplierFinanceScreen> {
   String? _truckPath;
   DateTime? _loadingDate; // dispatch step (after finance)
   TimeOfDay? _loadingTime;
+  String? _insurancePath; // dispatch docs (Insurance / LR Copy)
+  String? _lrCopyPath;
 
   @override
   void didChangeDependencies() {
@@ -141,17 +145,37 @@ class _SupplierFinanceScreenState extends State<SupplierFinanceScreen> {
     try {
       final d = _loadingDate!;
       final t = _loadingTime!;
-      await _api.post(ApiEndpoints.supplierDispatch('${widget.shipment.id}'), body: {
-        'loading_date': '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
-        'loading_time': '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}',
-        'description': _description.text,
-      });
+      // Multipart: loading date/time + notes + optional Insurance / LR Copy docs.
+      await _api.postMultipart(
+        ApiEndpoints.supplierDispatch('${widget.shipment.id}'),
+        fields: {
+          'loading_date': '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+          'loading_time': '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}',
+          'description': _description.text,
+        },
+        files: {
+          if (_insurancePath != null) 'insurance': _insurancePath!,
+          if (_lrCopyPath != null) 'lr_copy': _lrCopyPath!,
+        },
+      );
       _snack('Dispatch details submitted — shipment IN TRANSIT.');
+      _insurancePath = null;
+      _lrCopyPath = null;
       await _load();
     } catch (e) {
       _snack('$e', err: true);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openGatePass() async {
+    final cfg = context.read<AppConfig>();
+    final uri = Uri.parse('${cfg.apiBaseUrl}${ApiEndpoints.supplierGatePass('${widget.shipment.id}')}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      _snack('Could not open the gate pass.', err: true);
     }
   }
 
@@ -280,6 +304,32 @@ class _SupplierFinanceScreenState extends State<SupplierFinanceScreen> {
                               label: Text(_loadingTime == null ? 'Loading time' : _loadingTime!.format(context)),
                             )),
                           ]),
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            Expanded(child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final r = await FilePicker.platform.pickFiles(
+                                    type: FileType.custom, allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png']);
+                                if (r != null && r.files.single.path != null) {
+                                  setState(() => _insurancePath = r.files.single.path);
+                                }
+                              },
+                              icon: const Icon(Icons.shield_outlined),
+                              label: Text(_insurancePath == null ? 'Insurance (optional)' : 'Insurance ✓'),
+                            )),
+                            const SizedBox(width: 10),
+                            Expanded(child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final r = await FilePicker.platform.pickFiles(
+                                    type: FileType.custom, allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png']);
+                                if (r != null && r.files.single.path != null) {
+                                  setState(() => _lrCopyPath = r.files.single.path);
+                                }
+                              },
+                              icon: const Icon(Icons.description_outlined),
+                              label: Text(_lrCopyPath == null ? 'LR Copy (optional)' : 'LR Copy ✓'),
+                            )),
+                          ]),
                           _field(_description, 'Notes (optional)'),
                           const SizedBox(height: 12),
                           FilledButton(
@@ -287,6 +337,23 @@ class _SupplierFinanceScreenState extends State<SupplierFinanceScreen> {
                             child: _busy ? _spin() : const Text('Submit Dispatch (Mark In Transit)'),
                           ),
                         ],
+                      ],
+                    )),
+                  ],
+
+                  // ---- Gate pass (after dispatch is submitted / in transit) ----
+                  if (dispatchDone) ...[
+                    const SizedBox(height: 16),
+                    const _Label('Gate pass'),
+                    _card(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _banner('Dispatch submitted. Shipment is IN TRANSIT.', const Color(0xFF1B9C4A)),
+                        OutlinedButton.icon(
+                          onPressed: _openGatePass,
+                          icon: const Icon(Icons.picture_as_pdf_outlined),
+                          label: const Text('Download Gate Pass'),
+                        ),
                       ],
                     )),
                   ],
