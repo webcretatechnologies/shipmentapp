@@ -7,6 +7,7 @@ import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
 import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
+import '../../core/widgets/scan_field.dart';
 import '../shipments/shipments_repository.dart';
 
 /// Kitting Process (spec section 6): list shipments with combo SKUs and their
@@ -152,6 +153,28 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
     }
   }
 
+  Future<void> _scanToKit(Map<String, dynamic> e) async {
+    final ordered = asInt(e['qty_ordered']);
+    final hb = asInt(e['hard_bundle_qty']);
+    final kitted = asInt(e['kitted_qty']);
+    if (ordered - hb - kitted < 1) {
+      _snack('Nothing left to kit for this combo.', err: true);
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _KitScanSheet(
+        api: _api,
+        shipmentId: widget.shipment.id,
+        entry: e,
+      ),
+    );
+    // Refresh the entry breakdown after kitting (counts may have changed).
+    _reload();
+  }
+
   Future<void> _mergeAll() async {
     setState(() => _busy = true);
     try {
@@ -251,13 +274,30 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
           ]),
           if (!merged && toKit > 0) ...[
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _busy ? null : () => _hardBundle(e),
-                icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                label: const Text('Hard Bundle'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _busy ? null : () => _scanToKit(e),
+                    icon: const Icon(Icons.qr_code_scanner, size: 18),
+                    label: const Text('Scan to Kit'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : () => _hardBundle(e),
+                    icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                    label: const Text('Hard Bundle'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(46),
+                      foregroundColor: Pwa.text,
+                      side: const BorderSide(color: Pwa.border),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ],
@@ -279,4 +319,176 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
         ])),
       );
+}
+
+/// Scan-to-kit bottom sheet. Scan the combo's child SKUs in order, then the
+/// parent SKU, exactly like the admin panel — the server drives the sequence
+/// (POST /shipments/{id}/kitting/scan). Each result is appended to a live log.
+class _KitScanSheet extends StatefulWidget {
+  const _KitScanSheet({
+    required this.api,
+    required this.shipmentId,
+    required this.entry,
+  });
+
+  final ApiClient api;
+  final int shipmentId;
+  final Map<String, dynamic> entry;
+
+  @override
+  State<_KitScanSheet> createState() => _KitScanSheetState();
+}
+
+class _KitScanSheetState extends State<_KitScanSheet> {
+  final List<_ScanLine> _log = [];
+  bool _busy = false;
+  int _kitted = 0;
+  int _target = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _kitted = asInt(widget.entry['kitted_qty']);
+    _target = asInt(widget.entry['qty_ordered']) - asInt(widget.entry['hard_bundle_qty']);
+  }
+
+  Future<void> _onScan(String code) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final res = await widget.api.post(
+        ApiEndpoints.kittingScan('${widget.shipmentId}'),
+        body: {'barcode': code, 'combo_entry_id': widget.entry['entry_id']},
+      );
+      final m = res is Map ? Map<String, dynamic>.from(res) : <String, dynamic>{};
+      final ok = m['success'] == true;
+      if (m.containsKey('main_sku_scan_count')) _kitted = asInt(m['main_sku_scan_count']);
+      if (m.containsKey('kitting_target')) _target = asInt(m['kitting_target']);
+      _push(m['message']?.toString() ?? (ok ? 'Scanned' : 'Not matched'), ok);
+    } on ApiException catch (e) {
+      final data = e.data;
+      final msg = data is Map && data['message'] != null ? '${data['message']}' : e.message;
+      _push(msg, false);
+    } catch (err) {
+      _push('$err', false);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _push(String msg, bool ok) {
+    setState(() => _log.insert(0, _ScanLine(msg, ok)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sku = widget.entry['merchant_sku'] ?? widget.entry['combo_sku_code'] ?? '';
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    final done = _target > 0 && _kitted >= _target;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Pwa.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Scan to Kit · $sku',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: done ? const Color(0xFF16A34A).withOpacity(0.10) : Pwa.primaryLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(done ? Icons.check_circle : Icons.info_outline,
+                      size: 18, color: done ? const Color(0xFF16A34A) : Pwa.info),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      done
+                          ? 'All sets kitted ($_kitted/$_target). Close and Merge.'
+                          : 'Kitted $_kitted / $_target — scan child SKUs in order, then the parent SKU.',
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            ScanField(
+              onSubmit: _onScan,
+              enabled: !_busy && !done,
+              hint: 'Scan child / parent SKU',
+            ),
+            const SizedBox(height: 12),
+            if (_busy) const LinearProgressIndicator(minHeight: 2),
+            SizedBox(
+              height: 200,
+              child: _log.isEmpty
+                  ? const Center(
+                      child: Text('Scan a barcode to begin.',
+                          style: TextStyle(color: Pwa.muted)))
+                  : ListView.separated(
+                      itemCount: _log.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 6),
+                      itemBuilder: (_, i) {
+                        final line = _log[i];
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(line.ok ? Icons.check_circle : Icons.error_outline,
+                                size: 16,
+                                color: line.ok ? const Color(0xFF16A34A) : Pwa.danger),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(line.msg,
+                                  style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: line.ok ? Pwa.text : Pwa.danger)),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScanLine {
+  _ScanLine(this.msg, this.ok);
+  final String msg;
+  final bool ok;
 }

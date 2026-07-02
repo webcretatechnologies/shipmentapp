@@ -16,7 +16,12 @@ import '../../core/widgets/scan_field.dart';
 ///    time a shipment is sent (required); subsequent boxes just confirm.
 /// Uses GET racking, POST racking/{id}/receive|send, GET racking/lookup.
 class RackingScreen extends StatefulWidget {
-  const RackingScreen({super.key});
+  const RackingScreen({super.key, this.embedded = false});
+
+  /// When true, renders without its own Scaffold/AppBar so it can live inside a
+  /// tab (the Racking + Box Scanning combined screen).
+  final bool embedded;
+
   @override
   State<RackingScreen> createState() => _RackingScreenState();
 }
@@ -216,81 +221,99 @@ class _RackingScreenState extends State<RackingScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget _header() {
     const filters = [
       ('pending', 'Pending'),
       ('received', 'Received'),
       ('sent_to_box_scanning', 'Sent to Scanning'),
     ];
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: ScanField(
+              hint: 'Scan box barcode',
+              onSubmit: (code) async {
+                try {
+                  final data = await _api.get(ApiEndpoints.rackingLookup, query: {'barcode': code});
+                  final m = data is Map && data['data'] is Map
+                      ? Map<String, dynamic>.from(data['data'])
+                      : (data is Map ? Map<String, dynamic>.from(data) : null);
+                  if (m != null) _receiveBox(RackingBox.fromJson(m));
+                } catch (e) {
+                  _toast('$e', error: true);
+                }
+              },
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Row(
+              children: [
+                for (final (value, label) in filters)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _FilterPill(
+                      label: label,
+                      selected: _status == value,
+                      onTap: () => _setStatus(value),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _body() {
+    return AsyncView<List<RackingBox>>(
+      future: _future,
+      onRetry: _reload,
+      builder: (_, boxes) {
+        if (boxes.isEmpty) return const Center(child: Text('No boxes.'));
+        return RefreshIndicator(
+          onRefresh: () async => _reload(),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: boxes.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (_, i) => _RackingCard(
+              box: boxes[i],
+              onReceive: () => _receiveBox(boxes[i]),
+              onSend: () => _sendBox(boxes[i]),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.embedded) {
+      return Column(
+        children: [
+          const SizedBox(height: 8),
+          _header(),
+          Expanded(child: _body()),
+        ],
+      );
+    }
     return Scaffold(
       appBar: lightAppBar(
         context,
         'Racking Area',
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(104),
-          child: Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                  child: ScanField(
-                    hint: 'Scan box barcode',
-                    onSubmit: (code) async {
-                      try {
-                        final data = await _api.get(ApiEndpoints.rackingLookup, query: {'barcode': code});
-                        final m = data is Map && data['data'] is Map
-                            ? Map<String, dynamic>.from(data['data'])
-                            : (data is Map ? Map<String, dynamic>.from(data) : null);
-                        if (m != null) _receiveBox(RackingBox.fromJson(m));
-                      } catch (e) {
-                        _toast('$e', error: true);
-                      }
-                    },
-                  ),
-                ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Row(
-                    children: [
-                      for (final (value, label) in filters)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _FilterPill(
-                            label: label,
-                            selected: _status == value,
-                            onTap: () => _setStatus(value),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: _header(),
         ),
       ),
-      body: AsyncView<List<RackingBox>>(
-        future: _future,
-        onRetry: _reload,
-        builder: (_, boxes) {
-          if (boxes.isEmpty) return const Center(child: Text('No boxes.'));
-          return RefreshIndicator(
-            onRefresh: () async => _reload(),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: boxes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => _RackingCard(
-                box: boxes[i],
-                onReceive: () => _receiveBox(boxes[i]),
-                onSend: () => _sendBox(boxes[i]),
-              ),
-            ),
-          );
-        },
-      ),
+      body: _body(),
     );
   }
 }

@@ -15,7 +15,12 @@ import '../shipments/shipments_repository.dart';
 /// GET box-scanning/shipments, GET shipments/{id}/box-loading-state,
 /// POST shipments/{id}/box-scan-for-loading.
 class BoxScanningScreen extends StatefulWidget {
-  const BoxScanningScreen({super.key});
+  const BoxScanningScreen({super.key, this.embedded = false});
+
+  /// When true, renders without its own Scaffold/AppBar so it can live inside a
+  /// tab (the Racking + Box Scanning combined screen).
+  final bool embedded;
+
   @override
   State<BoxScanningScreen> createState() => _BoxScanningScreenState();
 }
@@ -35,9 +40,7 @@ class _BoxScanningScreenState extends State<BoxScanningScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: lightAppBar(context, 'Box Scanning'),
-      body: AsyncView<List<Shipment>>(
+    final body = AsyncView<List<Shipment>>(
         future: _future,
         onRetry: _reload,
         builder: (_, items) {
@@ -82,7 +85,11 @@ class _BoxScanningScreenState extends State<BoxScanningScreen> {
             ),
           );
         },
-      ),
+      );
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: lightAppBar(context, 'Box Scanning'),
+      body: body,
     );
   }
 }
