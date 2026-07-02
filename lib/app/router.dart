@@ -7,8 +7,7 @@ import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/shipments/shipments_list_screen.dart';
 import '../features/shipments/shipment_scan_screen.dart';
-import '../features/racking/racking_screen.dart';
-import '../features/box_scanning/box_scanning_screen.dart';
+import '../features/operations/racking_box_screen.dart';
 import '../features/kitting/kitting_screen.dart';
 import '../features/short_sku/short_sku_screen.dart';
 import '../features/short_box/short_box_screen.dart';
@@ -41,8 +40,9 @@ GoRouter buildRouter(AuthController auth) {
           shipmentCode: s.uri.queryParameters['code'] ?? '',
         ),
       ),
-      GoRoute(path: '/racking', builder: (_, __) => const RackingScreen()),
-      GoRoute(path: '/box-scanning', builder: (_, __) => const BoxScanningScreen()),
+      // Racking + Box Scanning share one tabbed screen; each card opens its tab.
+      GoRoute(path: '/racking', builder: (_, __) => const RackingBoxScreen(initialTab: 0)),
+      GoRoute(path: '/box-scanning', builder: (_, __) => const RackingBoxScreen(initialTab: 1)),
       GoRoute(path: '/kitting', builder: (_, __) => const KittingScreen()),
       GoRoute(
         path: '/short-sku',

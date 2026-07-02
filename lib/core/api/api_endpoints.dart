@@ -26,6 +26,7 @@ class ApiEndpoints {
   static const kittingShipments = '/kitting/shipments';
   static String kittingDetail(String id) => '/shipments/$id/kitting';
   static String kittingHardBundle(String entryId) => '/kitting/entry/$entryId/hard-bundle';
+  static String kittingScan(String id) => '/shipments/$id/kitting/scan';
   static String kittingMerge(String id) => '/shipments/$id/kitting/merge';
 
   // ---- Supplier / vendor ----
