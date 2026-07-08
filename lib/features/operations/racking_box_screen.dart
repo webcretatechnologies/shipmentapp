@@ -22,12 +22,12 @@ class RackingBoxScreen extends StatelessWidget {
         appBar: lightAppBar(
           context,
           'Racking & Box Scanning',
-          bottom: const TabBar(
-            labelColor: Pwa.primary,
-            unselectedLabelColor: Pwa.muted,
-            indicatorColor: Pwa.primary,
+          bottom: TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withOpacity(0.65),
+            indicatorColor: Colors.white,
             indicatorWeight: 2.4,
-            labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+            labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
             tabs: [
               Tab(text: 'Racking'),
               Tab(text: 'Box Scanning'),

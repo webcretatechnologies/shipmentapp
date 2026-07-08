@@ -4,38 +4,41 @@ import 'package:flutter/material.dart';
 /// Chosen at LOGIN time (Plantex tab vs Vendor tab) — not at build time.
 enum AppRole { plantex, supplier }
 
-/// Brand accent — primary teal (same for both roles).
-const Color kBrandAccent = Color(0xFF0FAFBF);
+/// Brand accent — primary teal (matches the PWA theme-color #028894).
+const Color kBrandAccent = Color(0xFF028894);
 
-/// App design tokens. Teal brand (#0FAFBF) + dark-navy headers.
+/// App design tokens — mirror the PWA warehouse-scan look:
+/// teal gradient header (#026e78 → #028894 → #03a0ad), light #ecf2f6 bg,
+/// 14px cards with a #d7e2ea border.
 class Pwa {
-  static const bg = Color(0xFFF1F5F9);
+  static const bg = Color(0xFFECF2F6); // PWA body bg
   static const card = Color(0xFFFFFFFF);
   static const text = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
 
-  // ── Teal brand (#0FAFBF) ──
-  static const primary = Color(0xFF0FAFBF);
-  static const primaryDark = Color(0xFF0C8E9C);
-  static const primaryMid = Color(0xFF2BC4D4);
-  static const primaryLight = Color(0xFFE6F8FA);
+  // ── Teal brand (PWA #028894) ──
+  static const primary = Color(0xFF028894);
+  static const primaryDark = Color(0xFF026E78);
+  static const primaryMid = Color(0xFF03A0AD);
+  static const primaryLight = Color(0xFFE6F4F5);
   static const primarySoft = Color(0xFFCDEFF3);
   static const primaryBorder = Color(0xFF9BDFE7);
 
-  static const border = Color(0xFFE2E8F0);
+  static const border = Color(0xFFD7E2EA); // PWA card border
   static const success = Color(0xFF16A34A);
   static const warning = Color(0xFFD97706);
   static const danger = Color(0xFFDC2626);
-  static const info = Color(0xFF0C8E9C);
+  static const info = Color(0xFF028894);
   static const radius = 14.0;
 
-  // ── Dark navy header ──
-  static const headerTop = Color(0xFF1E293B);
-  static const headerBottom = Color(0xFF0F172A);
+  // ── Teal gradient header (matches PWA .scan-app-back-bar) ──
+  static const headerTop = Color(0xFF026E78);
+  static const headerBottom = Color(0xFF03A0AD);
   static const headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF243248), Color(0xFF111B2B)],
+    colors: [Color(0xFF026E78), Color(0xFF028894), Color(0xFF03A0AD)],
+    stops: [0.0, 0.55, 1.0],
   );
 
   /// White → faint-grey card gradient used for counters/scan areas.

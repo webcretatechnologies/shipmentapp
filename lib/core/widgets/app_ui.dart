@@ -232,10 +232,11 @@ class AppCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Pwa.radius),
         border: Border.all(color: Pwa.border),
         boxShadow: const [
-          BoxShadow(color: Color(0x0A0F172A), blurRadius: 14, offset: Offset(0, 6)),
+          // matches PWA .card: 0 4px 14px rgba(15,23,42,0.06)
+          BoxShadow(color: Color(0x0F0F172A), blurRadius: 14, offset: Offset(0, 4)),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -248,9 +249,25 @@ class AppCard extends StatelessWidget {
 
 /// A white app bar with a rounded light back button, matching the list-screen
 /// mockups. Use as `appBar: lightAppBar(context, 'Title')`.
+/// Standard app bar with the PWA teal-gradient top bar + white title/back,
+/// so every screen shares the same header look as the warehouse PWA.
 PreferredSizeWidget lightAppBar(BuildContext context, String title,
     {List<Widget>? actions, bool back = true, PreferredSizeWidget? bottom}) {
   return AppBar(
+    backgroundColor: Colors.transparent,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    scrolledUnderElevation: 0,
+    iconTheme: const IconThemeData(color: Colors.white),
+    actionsIconTheme: const IconThemeData(color: Colors.white),
+    flexibleSpace: const DecoratedBox(
+      decoration: BoxDecoration(gradient: Pwa.headerGradient),
+    ),
+    titleTextStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.w800,
+    ),
     titleSpacing: back ? 4 : 16,
     leading: back
         ? Padding(
@@ -272,7 +289,7 @@ class _RoundedBack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFF1F5F9),
+      color: Colors.white.withOpacity(0.14),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -283,9 +300,9 @@ class _RoundedBack extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Pwa.border),
+            border: Border.all(color: Colors.white.withOpacity(0.22)),
           ),
-          child: const Icon(Icons.arrow_back_ios_new, size: 16, color: Pwa.text),
+          child: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.white),
         ),
       ),
     );
