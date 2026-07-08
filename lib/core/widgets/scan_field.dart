@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../app/flavor.dart';
+
 /// Barcode input: a text field (works with USB/Bluetooth ring scanners that
 /// "type" the code + Enter) plus a camera-scan button. Calls [onSubmit] with
 /// the raw code. Keeps focus so rapid scanning is fast.
@@ -123,7 +125,17 @@ class _CameraScanPageState extends State<_CameraScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan barcode')),
+      appBar: AppBar(
+        title: const Text('Scan barcode'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: Pwa.headerGradient),
+        ),
+      ),
       body: MobileScanner(
         onDetect: (capture) {
           if (_handled) return;
