@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../app/flavor.dart';
+
 /// Barcode input: a text field (works with USB/Bluetooth ring scanners that
 /// "type" the code + Enter) plus a camera-scan button. Calls [onSubmit] with
 /// the raw code. Keeps focus so rapid scanning is fast.
@@ -53,13 +55,14 @@ class _ScanFieldState extends State<ScanField> {
 
   @override
   Widget build(BuildContext context) {
-    const brand = Color(0xFF0FAFBF);
+    const brand = Color(0xFF028894); // PWA teal
     final dark = widget.dark;
-    final fill = dark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
-    final borderColor = dark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0);
+    // Dark variant now sits on the teal header → use a glassy translucent fill.
+    final fill = dark ? Colors.white.withOpacity(0.14) : const Color(0xFFFFFFFF);
+    final borderColor = dark ? Colors.white.withOpacity(0.22) : const Color(0xFFD7E2EA);
     final textColor = dark ? Colors.white : const Color(0xFF0F172A);
-    final hintColor = dark ? Colors.white.withOpacity(0.5) : const Color(0xFF94A3B8);
-    final iconColor = dark ? Colors.white.withOpacity(0.7) : brand;
+    final hintColor = dark ? Colors.white.withOpacity(0.6) : const Color(0xFF94A3B8);
+    final iconColor = dark ? Colors.white : brand;
     OutlineInputBorder b(Color c, double w) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c, width: w),
@@ -96,7 +99,9 @@ class _ScanFieldState extends State<ScanField> {
           child: FilledButton(
             style: FilledButton.styleFrom(
               padding: EdgeInsets.zero,
-              backgroundColor: brand,
+              // On the teal header (dark) use white; otherwise the teal brand.
+              backgroundColor: dark ? Colors.white : brand,
+              foregroundColor: dark ? brand : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: widget.enabled ? _openCamera : null,
@@ -120,7 +125,17 @@ class _CameraScanPageState extends State<_CameraScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan barcode')),
+      appBar: AppBar(
+        title: const Text('Scan barcode'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: Pwa.headerGradient),
+        ),
+      ),
       body: MobileScanner(
         onDetect: (capture) {
           if (_handled) return;
