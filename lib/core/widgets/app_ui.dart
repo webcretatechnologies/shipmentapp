@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/flavor.dart';
 import '../theme/app_theme.dart';
@@ -247,10 +248,9 @@ class AppCard extends StatelessWidget {
   }
 }
 
-/// A white app bar with a rounded light back button, matching the list-screen
-/// mockups. Use as `appBar: lightAppBar(context, 'Title')`.
 /// Standard app bar with the PWA teal-gradient top bar + white title/back,
 /// so every screen shares the same header look as the warehouse PWA.
+/// Use as `appBar: lightAppBar(context, 'Title')`.
 PreferredSizeWidget lightAppBar(BuildContext context, String title,
     {List<Widget>? actions, bool back = true, PreferredSizeWidget? bottom}) {
   return AppBar(
@@ -258,8 +258,16 @@ PreferredSizeWidget lightAppBar(BuildContext context, String title,
     foregroundColor: Colors.white,
     elevation: 0,
     scrolledUnderElevation: 0,
+    // Kill the Material-3 surface tint so the teal gradient never washes out
+    // when content scrolls under the bar.
+    surfaceTintColor: Colors.transparent,
+    shadowColor: Colors.transparent,
     iconTheme: const IconThemeData(color: Colors.white),
     actionsIconTheme: const IconThemeData(color: Colors.white),
+    // Light status-bar icons over the teal header (teal shows behind the bar).
+    systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
+      statusBarColor: Colors.transparent,
+    ),
     flexibleSpace: const DecoratedBox(
       decoration: BoxDecoration(gradient: Pwa.headerGradient),
     ),

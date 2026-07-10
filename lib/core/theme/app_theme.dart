@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Brand theme. [accent] comes from the active flavor.
 class AppTheme {
@@ -12,16 +13,26 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xFFF1F5F9), // Pwa.bg
+      // Teal PWA-style top bar app-wide, so EVERY screen (including any using a
+      // plain AppBar) shares the warehouse PWA header look. Screens using
+      // lightAppBar() layer the teal *gradient* on top of this solid teal base.
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0.5,
+        scrolledUnderElevation: 0,
         centerTitle: false,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: const TextStyle(
-          color: Color(0xFF0F172A),
+          color: Colors.white,
           fontSize: 20,
           fontWeight: FontWeight.w800,
+        ),
+        // Light status-bar icons over the teal header, teal shows behind the bar.
+        systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
         ),
       ),
       cardTheme: CardThemeData(
