@@ -182,7 +182,9 @@ class _ShipmentScanScreenState extends State<ShipmentScanScreen> {
             width: double.infinity,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: Pwa.primary,
+                // PWA "Request short SKU" is the orange warning action.
+                backgroundColor: Pwa.warning,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
