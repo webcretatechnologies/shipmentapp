@@ -14,6 +14,8 @@ class Shipment {
     this.totalUnits = 0,
     this.scannedUnits = 0,
     this.areaCode,
+    this.fcName,
+    this.boxesScanned = 0,
   });
 
   final int id;
@@ -24,6 +26,8 @@ class Shipment {
   final int totalUnits;
   final int scannedUnits;
   final String? areaCode;
+  final String? fcName; // fulfillment center (e.g. DED5) — shown under the code
+  final int boxesScanned; // total_boxes_scanned — shown in the card meta
 
   double get progress => totalUnits == 0 ? 0 : (scannedUnits / totalUnits).clamp(0, 1);
 
@@ -36,6 +40,8 @@ class Shipment {
         totalUnits: asInt(json['total_units']),
         scannedUnits: asInt(json['scanned_qty'] ?? json['scanned_units']),
         areaCode: json['area_code']?.toString(),
+        fcName: (json['fc_name'] ?? json['fulfillment_center'])?.toString(),
+        boxesScanned: asInt(json['total_boxes_scanned']),
       );
 }
 
