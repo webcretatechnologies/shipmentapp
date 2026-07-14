@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
@@ -107,6 +108,10 @@ class _ShortSkuScreenState extends State<ShortSkuScreen> {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Pwa.warning, // PWA short-SKU submit is orange
+              foregroundColor: Colors.white,
+            ),
             onPressed: _selected.isEmpty ? null : _submit,
             child: Text('Submit (${_selected.length})'),
           ),

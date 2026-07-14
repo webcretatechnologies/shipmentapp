@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/widgets/app_ui.dart';
@@ -157,6 +158,10 @@ class _ShortBoxScreenState extends State<ShortBoxScreen> {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Pwa.warning, // PWA short-box submit is orange
+              foregroundColor: Colors.white,
+            ),
             onPressed: (_busy || _reasonKey == null) ? null : _submit,
             child: _busy
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))

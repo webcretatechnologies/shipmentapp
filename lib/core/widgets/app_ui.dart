@@ -290,7 +290,10 @@ class AppCard extends StatelessWidget {
 PreferredSizeWidget lightAppBar(BuildContext context, String title,
     {List<Widget>? actions, bool back = true, PreferredSizeWidget? bottom}) {
   return AppBar(
-    backgroundColor: Colors.transparent,
+    // Solid teal base so the header is ALWAYS teal even if the gradient
+    // flexibleSpace fails to paint (e.g. behind the status bar); the gradient
+    // then layers on top when it renders.
+    backgroundColor: Pwa.primary,
     foregroundColor: Colors.white,
     elevation: 0,
     scrolledUnderElevation: 0,
