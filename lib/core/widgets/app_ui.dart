@@ -205,16 +205,52 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = AppTheme.statusColor(status);
+    // PWA warehouse-scan pill colors (green / amber / teal), matching the web badges.
+    final fg = AppTheme.pillFg(status);
+    final bg = AppTheme.pillBg(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: fg.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         status.replaceAll('_', ' ').toUpperCase(),
-        style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 11),
+        style: TextStyle(
+          color: fg,
+          fontWeight: FontWeight.w700,
+          fontSize: 11,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
+/// Thin teal progress bar matching the PWA `.ws-progress` (always teal, never
+/// status-colored). [value] is 0..1.
+class WsProgressBar extends StatelessWidget {
+  const WsProgressBar(this.value, {super.key, this.height = 6});
+  final double value;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: Stack(
+        children: [
+          Container(height: height, color: const Color(0xFFE2E8F0)),
+          FractionallySizedBox(
+            widthFactor: value.clamp(0, 1),
+            child: Container(
+              height: height,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Pwa.primary, Pwa.primaryMid]),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

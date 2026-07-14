@@ -7,12 +7,15 @@ class AppTheme {
     final scheme = ColorScheme.fromSeed(
       seedColor: accent,
       primary: accent,
+      // Keep secondary/tertiary on the same teal so no widget (chips, switches,
+      // selection handles, default tab indicators) leaks a derived off-brand hue.
+      secondary: accent,
       brightness: Brightness.light,
     );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFF1F5F9), // Pwa.bg
+      scaffoldBackgroundColor: const Color(0xFFECF2F6), // exact PWA body bg (--ws-bg)
       // Teal PWA-style top bar app-wide, so EVERY screen (including any using a
       // plain AppBar) shares the warehouse PWA header look. Screens using
       // lightAppBar() layer the teal *gradient* on top of this solid teal base.
@@ -68,6 +71,22 @@ class AppTheme {
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
+      // Default tabs (on a light background) use the teal brand — matches the PWA
+      // segmented tabs. Tabs placed on the teal header override this with white.
+      tabBarTheme: TabBarThemeData(
+        labelColor: accent,
+        unselectedLabelColor: const Color(0xFF64748B), // Pwa.muted
+        indicatorColor: accent,
+        dividerColor: Colors.transparent,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+      ),
+      // Text selection / cursor on the teal brand instead of a derived hue.
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: accent,
+        selectionHandleColor: accent,
+        selectionColor: accent.withOpacity(0.18),
+      ),
     );
   }
 
@@ -91,4 +110,31 @@ class AppTheme {
 
   /// Soft background tint for a status pill (12% of the foreground color).
   static Color statusBg(String status) => statusColor(status).withOpacity(0.12);
+
+  /// Warehouse-scan PWA status pill palette — mirrors `statusPillClass()` in the
+  /// PWA app.js so badges match 1:1:
+  ///   • complete / verified / progress → green  (success)
+  ///   • hold / short                   → amber  (warning)
+  ///   • everything else                → teal   (default primary-soft)
+  static Color pillFg(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('complete') || s.contains('verified') || s.contains('progress')) {
+      return const Color(0xFF15803D);
+    }
+    if (s.contains('hold') || s.contains('short')) {
+      return const Color(0xFFB45309);
+    }
+    return const Color(0xFF026E78); // ws-primary-dark
+  }
+
+  static Color pillBg(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('complete') || s.contains('verified') || s.contains('progress')) {
+      return const Color(0xFFDCFCE7);
+    }
+    if (s.contains('hold') || s.contains('short')) {
+      return const Color(0xFFFEF3C7);
+    }
+    return const Color(0xFFD7F2F4); // ws-primary-soft
+  }
 }

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/models/shipment.dart';
-import '../../core/theme/app_theme.dart';
+import '../../app/flavor.dart';
 import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import 'shipments_repository.dart';
@@ -51,12 +51,38 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
       appBar: lightAppBar(context, widget.title),
       body: Column(
         children: [
-          if (widget.source == ShipmentSource.all)
+          if (widget.source == ShipmentSource.all) ...[
+            // "Main Scan" context banner — matches the PWA .ws-context-banner card.
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Pwa.border),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x0F0F172A), blurRadius: 14, offset: Offset(0, 4)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text('Main Scan',
+                      style: TextStyle(
+                          color: Pwa.primaryDark, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                  SizedBox(height: 3),
+                  Text(
+                    'Scan SKUs into boxes, view scan log & expected items. Closed boxes move to Warehouse.',
+                    style: TextStyle(color: Pwa.muted, fontSize: 12.5, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
               child: TextField(
                 decoration: const InputDecoration(
-                  hintText: 'Search shipment code…',
+                  hintText: 'Search shipment ID…',
                   prefixIcon: Icon(Icons.search),
                 ),
                 textInputAction: TextInputAction.search,
@@ -66,6 +92,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                 },
               ),
             ),
+          ],
           Expanded(
             child: AsyncView<List<Shipment>>(
               future: _future,
@@ -77,9 +104,9 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                 return RefreshIndicator(
                   onRefresh: () async => _reload(),
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) => _ShipmentTile(
                       shipment: items[i],
                       onTap: () => context.push(
@@ -104,40 +131,51 @@ class _ShipmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.statusColor(shipment.status);
     return AppCard(
       onTap: onTap,
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Head: code + FC on the left, status pill on the right.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(shipment.shipmentId,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(shipment.shipmentId,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Pwa.primaryDark)),
+                    if ((shipment.fcName ?? '').isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(shipment.fcName!,
+                            style: const TextStyle(color: Pwa.muted, fontSize: 12)),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(width: 8),
               StatusPill(shipment.status),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _stat('SKUs', '${shipment.totalSkus}'),
-              _stat('Units', '${shipment.totalUnits}'),
-              _stat('Scanned', '${shipment.scannedUnits}'),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: shipment.progress,
-              minHeight: 7,
-              backgroundColor: const Color(0xFFE2E8F0),
-              color: color,
+          const SizedBox(height: 10),
+          WsProgressBar(shipment.progress),
+          const SizedBox(height: 8),
+          // Meta: Scanned X / Y   ·   Boxes N
+          DefaultTextStyle(
+            style: const TextStyle(color: Pwa.muted, fontSize: 12.5),
+            child: Row(
+              children: [
+                _meta('Scanned ', '${shipment.scannedUnits}', ' / ${shipment.totalUnits}'),
+                const SizedBox(width: 16),
+                _meta('Boxes ', '${shipment.boxesScanned}', ''),
+              ],
             ),
           ),
         ],
@@ -145,12 +183,14 @@ class _ShipmentTile extends StatelessWidget {
     );
   }
 
-  Widget _stat(String label, String value) => Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _meta(String label, String value, String suffix) => Text.rich(
+        TextSpan(
+          text: label,
           children: [
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(label, style: const TextStyle(color: Colors.black45, fontSize: 12)),
+            TextSpan(
+                text: value,
+                style: const TextStyle(color: Pwa.text, fontWeight: FontWeight.w700)),
+            TextSpan(text: suffix),
           ],
         ),
       );
