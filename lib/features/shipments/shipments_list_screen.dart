@@ -6,7 +6,6 @@ import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/shipment.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/app_bottom_nav.dart';
 import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import 'shipments_repository.dart';
@@ -73,8 +72,6 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
         title: Text(widget.title, style: const TextStyle(color: Pwa.text, fontSize: 22, fontWeight: FontWeight.w800)),
       ),
       backgroundColor: Pwa.bg,
-      bottomNavigationBar:
-          widget.source == ShipmentSource.all ? const AppBottomNav(current: 1) : null,
       body: Column(
         children: [
           if (widget.source == ShipmentSource.all)

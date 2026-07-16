@@ -5,7 +5,6 @@ import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/models/shipment.dart';
-import '../../core/widgets/app_bottom_nav.dart';
 import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/scan_field.dart';
@@ -42,7 +41,6 @@ class _KittingScreenState extends State<KittingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: lightAppBar(context, 'Kitting Process'),
-      bottomNavigationBar: const AppBottomNav(current: 3),
       body: AsyncView<List<Shipment>>(
         future: _future,
         onRetry: _reload,
