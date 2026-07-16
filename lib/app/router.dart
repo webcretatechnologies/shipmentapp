@@ -13,6 +13,9 @@ import '../features/short_sku/short_sku_screen.dart';
 import '../features/short_box/short_box_screen.dart';
 import '../features/supplier/supplier_invoice_screen.dart';
 import '../features/supplier/purchase_orders_screen.dart';
+import '../features/plantex/plantex_list_screen.dart';
+import '../features/plantex/plantex_scan_screen.dart';
+import '../features/plantex/plantex_invoice_screen.dart';
 
 GoRouter buildRouter(AuthController auth) {
   return GoRouter(
@@ -54,6 +57,16 @@ GoRouter buildRouter(AuthController auth) {
       ),
       GoRoute(path: '/invoices', builder: (_, __) => const SupplierInvoiceScreen()),
       GoRoute(path: '/purchase-orders', builder: (_, __) => const PurchaseOrdersScreen()),
+      // Plantex (PO-based vendor) flow: list → scan/pack → raise invoice.
+      GoRoute(path: '/plantex-shipments', builder: (_, __) => const PlantexListScreen()),
+      GoRoute(
+        path: '/plantex-shipments/:id',
+        builder: (_, s) => PlantexScanScreen(id: int.parse(s.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/plantex-shipments/:id/invoice',
+        builder: (_, s) => PlantexInvoiceScreen(id: int.parse(s.pathParameters['id']!)),
+      ),
     ],
     errorBuilder: (_, s) => Scaffold(
       appBar: AppBar(title: const Text('Not found')),

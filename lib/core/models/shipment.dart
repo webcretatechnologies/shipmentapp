@@ -16,6 +16,7 @@ class Shipment {
     this.areaCode,
     this.fcName,
     this.boxesScanned = 0,
+    this.appointmentDate,
   });
 
   final int id;
@@ -28,6 +29,7 @@ class Shipment {
   final String? areaCode;
   final String? fcName; // fulfillment center (e.g. DED5) — shown under the code
   final int boxesScanned; // total_boxes_scanned — shown in the card meta
+  final DateTime? appointmentDate; // shown as "Appt." in the list card
 
   double get progress => totalUnits == 0 ? 0 : (scannedUnits / totalUnits).clamp(0, 1);
 
@@ -42,6 +44,8 @@ class Shipment {
         areaCode: json['area_code']?.toString(),
         fcName: (json['fc_name'] ?? json['fulfillment_center'])?.toString(),
         boxesScanned: asInt(json['total_boxes_scanned']),
+        appointmentDate: DateTime.tryParse(
+            (json['appointment_date'] ?? json['appointment'] ?? '').toString()),
       );
 }
 

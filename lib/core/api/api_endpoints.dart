@@ -61,4 +61,14 @@ class ApiEndpoints {
   static String dispatch(String id) => '/shipments/$id/dispatch';
   static String markInvoiced(String id) => '/shipments/$id/mark-invoiced';
   static const stockmoveWarehouses = '/stockmove-warehouses';
+
+  // ---- Plantex (PO-based vendor flow) ----
+  // Mirrors Api\Mobile\MobilePlantexController (supplier group).
+  static const plantexShipments = '/supplier/plantex-shipments';
+  static String plantexShipment(String id) => '/supplier/plantex-shipments/$id';
+  static String plantexAccept(String id) => '/supplier/plantex-shipments/$id/accept';
+  static String plantexPackBox(String id) => '/supplier/plantex-shipments/$id/pack-box';
+  static String plantexRemoveUnit(String id) => '/supplier/plantex-shipments/$id/remove-unit';
+  static String plantexMarkShort(String id) => '/supplier/plantex-shipments/$id/mark-short';
+  static String plantexRaiseInvoice(String id) => '/supplier/plantex-shipments/$id/raise-invoice';
 }

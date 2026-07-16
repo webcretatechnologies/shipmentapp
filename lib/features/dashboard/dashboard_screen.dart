@@ -6,31 +6,11 @@ import '../../app/flavor.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/auth/auth_controller.dart';
-import '../../core/models/auth_models.dart';
 import '../../core/models/dashboard_counts.dart';
+import '../../core/widgets/app_bottom_nav.dart';
 
-/// A card is shown only if the logged-in user has access to that module —
-/// mirroring their admin-panel permissions.
-bool _hasAccess(DashboardModule m, Capabilities c, bool isSupplier) {
-  switch (m) {
-    case DashboardModule.shipments:
-      return c.viewShipments || c.scan;
-    case DashboardModule.racking:
-      return c.racking;
-    case DashboardModule.boxScanning:
-      return c.boxScanning;
-    case DashboardModule.kitting:
-      return c.kitting;
-    case DashboardModule.shortSku:
-      return c.shortSku;
-    case DashboardModule.shortBox:
-      return c.shortBox;
-    case DashboardModule.invoices:
-    case DashboardModule.purchaseOrders:
-      return isSupplier; // vendor-only modules
-  }
-}
-
+/// Home — "Supplier Portal" module grid (mockup 02). Cards navigate into the
+/// existing flows; all logic/counts come from the same admin-panel operations.
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
   @override
@@ -62,239 +42,156 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthController>();
-    final role = auth.role;
-    final user = auth.user;
-    final caps = user?.capabilities ?? const Capabilities();
-    final modules = modulesForRole(role).where((m) => _hasAccess(m, caps, role.isSupplier)).toList();
+    final user = context.watch<AuthController>().user;
+    final vendorName = (user?.name ?? 'Vendor').trim();
+    final initials = vendorName.isNotEmpty ? vendorName[0].toUpperCase() : 'V';
 
     return Scaffold(
       backgroundColor: Pwa.bg,
-      body: FutureBuilder<DashboardCounts>(
-        future: _future,
-        builder: (context, snap) {
-          final counts = snap.data ?? DashboardCounts();
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _header(user, role, counts),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 8),
-                  child: Text('QUICK ACCESS',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                          color: Pwa.muted.withOpacity(0.9))),
-                ),
-                if (modules.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(24, 40, 24, 24),
-                    child: Text(
-                      'No modules are assigned to your account.\nAsk an admin to grant access.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Pwa.muted),
-                    ),
-                  )
-                else
+      body: SafeArea(
+        bottom: false,
+        child: FutureBuilder<DashboardCounts>(
+          future: _future,
+          builder: (context, snap) {
+            final c = snap.data ?? DashboardCounts();
+            final modules = _modules(c);
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  // Top bar
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 4, 14, 28),
+                    padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+                    child: Row(
+                      children: [
+                        _circle(initials, onTap: () {}),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Text('Supplier Portal',
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Pwa.text)),
+                        ),
+                        _circleIcon(Icons.logout_rounded, onTap: () => context.read<AuthController>().logout()),
+                      ],
+                    ),
+                  ),
+                  // Teal welcome banner
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(gradient: Pwa.headerGradient),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Welcome, $vendorName',
+                            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 2),
+                        Text('Select a module to get started',
+                            style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  // Module grid
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
                     child: GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisCount: 2,
                       mainAxisSpacing: 14,
                       crossAxisSpacing: 14,
-                      childAspectRatio: 0.98,
-                      children: modules
-                          .map((m) => _ModuleCard(
-                                module: m,
-                                count: counts.forModule(m.name),
-                                onTap: () => context.push(m.route),
-                              ))
-                          .toList(),
+                      childAspectRatio: 0.86,
+                      children: modules.map((m) => _ModuleCard(m)).toList(),
                     ),
                   ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
+      bottomNavigationBar: const AppBottomNav(current: 0),
     );
   }
 
-  // ── Stylish gradient header with the user's name + Pending/Closed stats ──
-  Widget _header(AppUser? user, AppRole role, DashboardCounts counts) {
-    final name = (user?.name ?? '').trim();
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final sub = role.isSupplier
-        ? 'Vendor Portal'
-        : (user?.areaCode?.isNotEmpty == true ? 'Warehouse · Area ${user!.areaCode}' : 'Plantex Warehouse');
+  List<_Module> _modules(DashboardCounts c) => [
+        _Module('FBA Shipment', 'Amazon FBA inbound shipments', Icons.local_shipping_outlined,
+            const Color(0xFFE6F4F5), Pwa.primaryDark, '${c.shipments} Active', Pwa.primaryDark, const Color(0xFFE6F4F5), '/shipments'),
+        _Module('Plantex Shipment', 'Direct Plantex warehouse orders', Icons.inventory_2_outlined,
+            const Color(0xFFEDE9FE), const Color(0xFF7C3AED), '${c.shipments} Active', const Color(0xFF7C3AED), const Color(0xFFEDE9FE), '/shipments'),
+        _Module('Kitting for FBA', 'Combo SKU assembly & kitting', Icons.edit_outlined,
+            const Color(0xFFFEF3C7), const Color(0xFFD97706), '${c.kitting} Pending', const Color(0xFFB45309), const Color(0xFFFEF3C7), '/kitting'),
+        _Module('Invoice — FBA', 'Raise FBA shipment invoices', Icons.description_outlined,
+            const Color(0xFFDCFCE7), const Color(0xFF16A34A), '${c.invoices} Due', const Color(0xFF15803D), const Color(0xFFDCFCE7), '/invoices'),
+        _Module('Invoice — Plantex', 'Raise Plantex shipment invoices', Icons.description_outlined,
+            const Color(0xFFFEE2E2), const Color(0xFFDC2626), '${c.invoices} Due', const Color(0xFFB91C1C), const Color(0xFFFEE2E2), '/invoices'),
+        _Module('Box & Racking — FBA', 'Scan boxes & assign rack locations', Icons.dns_outlined,
+            const Color(0xFFCDEFF3), Pwa.primaryDark, '${c.boxScanning} Boxes', Pwa.primaryDark, const Color(0xFFCDEFF3), '/racking'),
+      ];
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: Pwa.headerGradient,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
-      ),
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              // avatar
-              Container(
-                width: 46,
-                height: 46,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.35)),
-                ),
-                child: Text(initial,
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(sub.toUpperCase(),
-                        style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8)),
-                    const SizedBox(height: 2),
-                    Text(name.isEmpty ? 'Dashboard' : name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w800)),
-                  ],
-                ),
-              ),
-              _iconBtn(Icons.logout, 'Logout', context.read<AuthController>().logout),
-            ],
-          ),
-          const SizedBox(height: 18),
-          // Only Pending + Closed (there is no "Active" status).
-          Row(
-            children: [
-              Expanded(child: _statCard('${counts.pending}', 'Pending', const Color(0xFFFCD34D))),
-              const SizedBox(width: 12),
-              Expanded(child: _statCard('${counts.complete}', 'Closed', const Color(0xFF6EE7B7))),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statCard(String value, String label, Color accent) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.18)),
-        ),
-        child: Column(
-          children: [
-            Text(value, style: TextStyle(color: accent, fontSize: 26, fontWeight: FontWeight.w800, height: 1)),
-            const SizedBox(height: 4),
-            Text(label.toUpperCase(),
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.6)),
-          ],
-        ),
+  Widget _circle(String txt, {VoidCallback? onTap}) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: CircleAvatar(radius: 18, backgroundColor: const Color(0xFFCBD5E1), child: Text(txt, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
       );
-
-  Widget _iconBtn(IconData icon, String tip, VoidCallback onTap) => Tooltip(
-        message: tip,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.25)),
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-        ),
+  Widget _circleIcon(IconData icon, {VoidCallback? onTap}) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: CircleAvatar(radius: 18, backgroundColor: const Color(0xFFE2E8F0), child: Icon(icon, size: 18, color: Pwa.muted)),
       );
 }
 
+class _Module {
+  const _Module(this.title, this.subtitle, this.icon, this.iconBg, this.iconColor, this.pill, this.pillColor, this.pillBg, this.route);
+  final String title, subtitle, pill, route;
+  final IconData icon;
+  final Color iconBg, iconColor, pillColor, pillBg;
+}
+
 class _ModuleCard extends StatelessWidget {
-  const _ModuleCard({required this.module, required this.count, required this.onTap});
-  final DashboardModule module;
-  final int count;
-  final VoidCallback onTap;
+  const _ModuleCard(this.m);
+  final _Module m;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
-      elevation: 0,
       child: InkWell(
-        onTap: onTap,
         borderRadius: BorderRadius.circular(18),
+        onTap: () => context.push(m.route),
         child: Ink(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: Pwa.border),
-            boxShadow: const [BoxShadow(color: Color(0x0F0F172A), blurRadius: 16, offset: Offset(0, 6))],
+            boxShadow: const [BoxShadow(color: Color(0x0A0F172A), blurRadius: 14, offset: Offset(0, 6))],
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                width: 46,
+                height: 46,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: m.iconBg, borderRadius: BorderRadius.circular(13)),
+                child: Icon(m.icon, color: m.iconColor, size: 24),
+              ),
+              const SizedBox(height: 14),
+              Text(m.title, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: Pwa.text)),
+              const SizedBox(height: 4),
+              Text(m.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Pwa.muted, fontSize: 12, height: 1.3)),
+              const Spacer(),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Pwa.primaryLight, Pwa.primarySoft],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(module.icon, color: Pwa.primaryDark, size: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: m.pillBg, borderRadius: BorderRadius.circular(999)),
+                    child: Text(m.pill, style: TextStyle(color: m.pillColor, fontWeight: FontWeight.w700, fontSize: 12)),
                   ),
-                  // Count only for accessible modules (this card only renders when
-                  // the user has access) and only when there's something to show.
-                  if (count > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: Pwa.primary, borderRadius: BorderRadius.circular(20)),
-                      child: Text('$count',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
-                    ),
-                ],
-              ),
-              const Spacer(),
-              Text(module.label,
-                  style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: Pwa.text)),
-              const SizedBox(height: 3),
-              Row(
-                children: [
-                  Text('Open', style: TextStyle(color: Pwa.primaryDark, fontSize: 12, fontWeight: FontWeight.w600)),
-                  const SizedBox(width: 3),
-                  Icon(Icons.arrow_forward, size: 13, color: Pwa.primaryDark),
+                  const Spacer(),
+                  const Icon(Icons.chevron_right_rounded, color: Pwa.muted, size: 20),
                 ],
               ),
             ],
@@ -304,3 +201,4 @@ class _ModuleCard extends StatelessWidget {
     );
   }
 }
+
