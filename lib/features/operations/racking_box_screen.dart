@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../app/flavor.dart';
-import '../../core/widgets/app_bottom_nav.dart';
 import '../../core/widgets/app_ui.dart';
 import '../box_scanning/box_scanning_screen.dart';
 import '../racking/racking_screen.dart';
@@ -35,7 +34,6 @@ class RackingBoxScreen extends StatelessWidget {
             ],
           ),
         ),
-        bottomNavigationBar: const AppBottomNav(current: 2),
         body: const TabBarView(
           children: [
             RackingScreen(embedded: true),

@@ -68,7 +68,7 @@ extension AppRoleX on AppRole {
 
 /// Dashboard cards. `route` is the go_router path.
 enum DashboardModule {
-  shipments('All Shipments', Icons.local_shipping_outlined, '/shipments'),
+  shipments('FBA Shipments', Icons.local_shipping_outlined, '/shipments'),
   racking('Racking Area', Icons.grid_view_outlined, '/racking'),
   boxScanning('Box Scanning', Icons.inventory_2_outlined, '/box-scanning'),
   kitting('Kitting Process', Icons.dashboard_customize_outlined, '/kitting'),
@@ -87,28 +87,28 @@ enum DashboardModule {
   Color get accent => const Color(0xFF0FAFBF);
 }
 
-/// Which cards each role sees.
+/// Which cards each role sees. Distinct per role — matches the admin panel:
+///
+///  • SUPPLIER (vendor login): their own FBA shipments + Plantex PO shipments,
+///    plus a PO view. All scanning / kitting / box scan / transport details /
+///    invoice happen INSIDE those shipment flows (not as separate cards).
+///
+///  • PLANTEX (warehouse login): scan FBA shipments + warehouse operations
+///    (racking, box scanning, short box) + view POs.
 List<DashboardModule> modulesForRole(AppRole role) {
   if (role == AppRole.supplier) {
     return const [
-      DashboardModule.shipments,
-      DashboardModule.racking,
-      DashboardModule.boxScanning,
-      DashboardModule.kitting,
-      DashboardModule.shortSku,
-      DashboardModule.shortBox,
-      DashboardModule.invoices,
-      DashboardModule.purchaseOrders,
-      DashboardModule.plantex,
+      DashboardModule.shipments,       // FBA Shipments (scan → kitting/box scan → transport + invoice)
+      DashboardModule.plantex,         // Plantex Shipments (direct scan → short sku/box → invoice)
+      DashboardModule.purchaseOrders,  // View POs
     ];
   }
   // Plantex (warehouse)
   return const [
-    DashboardModule.shipments,
-    DashboardModule.racking,
-    DashboardModule.boxScanning,
-    DashboardModule.kitting,
-    DashboardModule.shortSku,
-    DashboardModule.shortBox,
+    DashboardModule.shipments,       // FBA Shipments (scan → expected + scanned boxes + Short SKU)
+    DashboardModule.racking,         // Racking Area
+    DashboardModule.boxScanning,     // Box Scanning
+    DashboardModule.shortBox,        // Short Box
+    DashboardModule.purchaseOrders,  // View POs
   ];
 }

@@ -7,7 +7,6 @@ import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/models/dashboard_counts.dart';
-import '../../core/widgets/app_bottom_nav.dart';
 
 /// Home — "Supplier Portal" module grid (mockup 02). Cards navigate into the
 /// existing flows; all logic/counts come from the same admin-panel operations.
@@ -54,7 +53,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           future: _future,
           builder: (context, snap) {
             final c = snap.data ?? DashboardCounts();
-            final modules = _modules(c);
+            final role = context.read<AuthController>().role;
+            final modules = _modules(c, role);
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -67,9 +67,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         _circle(initials, onTap: () {}),
                         const SizedBox(width: 14),
-                        const Expanded(
-                          child: Text('Supplier Portal',
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Pwa.text)),
+                        Expanded(
+                          child: Text(role == AppRole.supplier ? 'Supplier Portal' : 'Warehouse Portal',
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Pwa.text)),
                         ),
                         _circleIcon(Icons.logout_rounded, onTap: () => context.read<AuthController>().logout()),
                       ],
@@ -110,24 +110,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: 0),
     );
   }
 
-  List<_Module> _modules(DashboardCounts c) => [
-        _Module('FBA Shipment', 'Amazon FBA inbound shipments', Icons.local_shipping_outlined,
+  /// Role-aware cards — mirrors the admin panel. SUPPLIER (vendor) sees their
+  /// FBA + Plantex shipments and a PO view; all scanning / kitting / box scan /
+  /// transport / invoice happen INSIDE those shipment flows. PLANTEX (warehouse)
+  /// sees FBA scanning + warehouse operations + a PO view.
+  List<_Module> _modules(DashboardCounts c, AppRole role) {
+    final kitting = _Module('Kitting Process', 'Combo SKU assembly & kitting', Icons.edit_outlined,
+        const Color(0xFFFEF3C7), const Color(0xFFD97706), '${c.kitting} Pending', const Color(0xFFB45309), const Color(0xFFFEF3C7), '/kitting');
+
+    if (role == AppRole.supplier) {
+      return [
+        _Module('FBA Shipments', 'Scan SKU, box barcode, expected — Short SKU', Icons.local_shipping_outlined,
             const Color(0xFFE6F4F5), Pwa.primaryDark, '${c.shipments} Active', Pwa.primaryDark, const Color(0xFFE6F4F5), '/shipments'),
-        _Module('Plantex Shipment', 'Direct Plantex warehouse orders', Icons.inventory_2_outlined,
-            const Color(0xFFEDE9FE), const Color(0xFF7C3AED), '${c.shipments} Active', const Color(0xFF7C3AED), const Color(0xFFEDE9FE), '/shipments'),
-        _Module('Kitting for FBA', 'Combo SKU assembly & kitting', Icons.edit_outlined,
-            const Color(0xFFFEF3C7), const Color(0xFFD97706), '${c.kitting} Pending', const Color(0xFFB45309), const Color(0xFFFEF3C7), '/kitting'),
-        _Module('Invoice — FBA', 'Raise FBA shipment invoices', Icons.description_outlined,
+        _Module('Plantex Shipments', 'Direct PO scan — Short SKU / Short Box', Icons.inventory_2_outlined,
+            const Color(0xFFEDE9FE), const Color(0xFF7C3AED), 'PO based', const Color(0xFF7C3AED), const Color(0xFFEDE9FE), '/plantex-shipments'),
+        kitting,
+        _Module('Invoice — FBA', 'Transport, builty, truck photo & raise invoice', Icons.local_shipping_outlined,
             const Color(0xFFDCFCE7), const Color(0xFF16A34A), '${c.invoices} Due', const Color(0xFF15803D), const Color(0xFFDCFCE7), '/invoices'),
-        _Module('Invoice — Plantex', 'Raise Plantex shipment invoices', Icons.description_outlined,
-            const Color(0xFFFEE2E2), const Color(0xFFDC2626), '${c.invoices} Due', const Color(0xFFB91C1C), const Color(0xFFFEE2E2), '/invoices'),
-        _Module('Box & Racking — FBA', 'Scan boxes & assign rack locations', Icons.dns_outlined,
-            const Color(0xFFCDEFF3), Pwa.primaryDark, '${c.boxScanning} Boxes', Pwa.primaryDark, const Color(0xFFCDEFF3), '/racking'),
+        _Module('Invoice — Plantex', 'Raise Plantex shipment invoice', Icons.receipt_long_outlined,
+            const Color(0xFFFEE2E2), const Color(0xFFDC2626), 'Plantex', const Color(0xFFB91C1C), const Color(0xFFFEE2E2), '/plantex-shipments'),
       ];
+    }
+
+    // Plantex (warehouse)
+    return [
+      _Module('Shipments', 'Scan SKU, box barcode, expected — Short SKU', Icons.local_shipping_outlined,
+          const Color(0xFFE6F4F5), Pwa.primaryDark, '${c.shipments} Active', Pwa.primaryDark, const Color(0xFFE6F4F5), '/shipments'),
+      kitting,
+      _Module('Warehouse', 'Racking area & box scanning', Icons.warehouse_outlined,
+          const Color(0xFFCDEFF3), Pwa.primaryDark, 'Racking + Box', Pwa.primaryDark, const Color(0xFFCDEFF3), '/racking'),
+      _Module('PO List', 'View purchase orders', Icons.assignment_outlined,
+          const Color(0xFFEDE9FE), const Color(0xFF7C3AED), 'View', const Color(0xFF7C3AED), const Color(0xFFEDE9FE), '/purchase-orders'),
+    ];
+  }
 
   Widget _circle(String txt, {VoidCallback? onTap}) => InkWell(
         onTap: onTap,
