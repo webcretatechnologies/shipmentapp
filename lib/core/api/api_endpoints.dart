@@ -28,6 +28,7 @@ class ApiEndpoints {
   static String kittingHardBundle(String entryId) => '/kitting/entry/$entryId/hard-bundle';
   static String kittingScan(String id) => '/shipments/$id/kitting/scan';
   static String kittingMerge(String id) => '/shipments/$id/kitting/merge';
+  static String kittingComplete(String id) => '/shipments/$id/kitting/complete';
 
   // ---- Supplier / vendor ----
   static String supplierFinance(String id) => '/supplier/shipments/$id/finance';

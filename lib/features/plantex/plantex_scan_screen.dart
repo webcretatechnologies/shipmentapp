@@ -188,7 +188,7 @@ class _PlantexScanScreenState extends State<PlantexScanScreen> {
     final reason = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Short close'),
+        title: const Text('Short SKU'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +203,7 @@ class _PlantexScanScreenState extends State<PlantexScanScreen> {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Pwa.warning),
             onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-            child: const Text('Short close'),
+            child: const Text('Short SKU'),
           ),
         ],
       ),
@@ -368,7 +368,7 @@ class _PlantexScanScreenState extends State<PlantexScanScreen> {
                   onPressed: _busy ? null : _short,
                   style: OutlinedButton.styleFrom(foregroundColor: Pwa.warning, side: const BorderSide(color: Pwa.warning)),
                   icon: const Icon(Icons.report_problem_outlined),
-                  label: const Text('Short Close'),
+                  label: const Text('Short SKU'),
                 ),
               ),
               const SizedBox(width: 12),

@@ -8,6 +8,7 @@ import '../../core/models/shipment.dart';
 import '../../core/widgets/app_ui.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/scan_field.dart';
+import '../short_box/short_box_screen.dart';
 import '../shipments/shipments_repository.dart';
 
 /// Box Scanning Area (spec section 5): list shipments with boxes ready for
@@ -149,7 +150,20 @@ class _BoxLoadingScreenState extends State<BoxLoadingScreen> {
     final scanned = (_state?['scanned_boxes'] as List?) ?? const [];
     final pending = (_state?['pending_boxes'] as List?) ?? const [];
     return Scaffold(
-      appBar: lightAppBar(context, widget.shipment.shipmentId),
+      appBar: lightAppBar(context, widget.shipment.shipmentId, actions: [
+        // Short Box — same option the admin box-scanning (box details) page has.
+        TextButton.icon(
+          onPressed: () async {
+            await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => ShortBoxScreen(shipmentId: widget.shipment.id),
+            ));
+            _refresh();
+          },
+          icon: const Icon(Icons.unarchive_outlined, color: Colors.white, size: 18),
+          label: const Text('Short Box',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        ),
+      ]),
       body: Column(
         children: [
           Container(

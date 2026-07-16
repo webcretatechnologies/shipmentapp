@@ -18,6 +18,14 @@ class PlantexShipment {
     this.closedBoxes = 0,
     this.appointmentDate,
     this.invoiceApproved = false,
+    this.transporterName,
+    this.transporterGst,
+    this.vehicleNo,
+    this.driverName,
+    this.driverNo,
+    this.dispatchNotes,
+    this.invoiceFileUrl,
+    this.invoiceRaisedAt,
   });
 
   final int id;
@@ -35,6 +43,16 @@ class PlantexShipment {
   final int closedBoxes;
   final String? appointmentDate;
   final bool invoiceApproved;
+
+  // Raised-invoice dispatch details (from the `dispatch` block).
+  final String? transporterName;
+  final String? transporterGst;
+  final String? vehicleNo;
+  final String? driverName;
+  final String? driverNo;
+  final String? dispatchNotes;
+  final String? invoiceFileUrl;
+  final String? invoiceRaisedAt;
 
   double get progress => totalQty == 0 ? 0 : (scannedQty / totalQty).clamp(0, 1);
   bool get isAccepted => status != 'released';
@@ -57,7 +75,21 @@ class PlantexShipment {
         closedBoxes: asInt(j['closed_boxes']),
         appointmentDate: j['appointment_date']?.toString(),
         invoiceApproved: asBool(j['invoice_approved']),
+        transporterName: _disp(j, 'transporter_name'),
+        transporterGst: _disp(j, 'transporter_gst'),
+        vehicleNo: _disp(j, 'vehicle_no'),
+        driverName: _disp(j, 'driver_name'),
+        driverNo: _disp(j, 'driver_no'),
+        dispatchNotes: _disp(j, 'dispatch_notes'),
+        invoiceFileUrl: _disp(j, 'invoice_file_url'),
+        invoiceRaisedAt: _disp(j, 'invoice_raised_at'),
       );
+
+  /// Pull a value from the nested `dispatch` block (null-safe).
+  static String? _disp(Map<String, dynamic> j, String key) {
+    final d = j['dispatch'];
+    return d is Map ? d[key]?.toString() : null;
+  }
 }
 
 /// A PO line item (EAN → qty). From the `items` array on show().
