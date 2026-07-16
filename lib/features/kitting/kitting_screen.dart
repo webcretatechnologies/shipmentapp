@@ -175,15 +175,16 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
     _reload();
   }
 
-  Future<void> _mergeAll() async {
+  /// Complete Kitting — mirrors the admin panel: marks entries packed, merges,
+  /// and RELEASES the shipment for scanning (not just a merge).
+  Future<void> _completeKitting() async {
     setState(() => _busy = true);
     try {
-      final res = await _api.post(ApiEndpoints.kittingMerge('${widget.shipment.id}'));
-      _snack(res is Map ? '${res['message'] ?? 'Merged'}' : 'Merged');
-      _reload();
+      final res = await _api.post(ApiEndpoints.kittingComplete('${widget.shipment.id}'));
+      _snack(res is Map ? '${res['message'] ?? 'Kitting complete — released for scanning.'}' : 'Kitting complete.');
+      if (mounted) Navigator.of(context).maybePop();
     } catch (err) {
       _snack('$err', err: true);
-    } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -229,9 +230,9 @@ class _KittingDetailScreenState extends State<KittingDetailScreen> {
                       for (final raw in entries) _entryCard(Map<String, dynamic>.from(raw as Map)),
                       const SizedBox(height: 4),
                       OutlinedButton.icon(
-                        onPressed: _busy ? null : _mergeAll,
-                        icon: const Icon(Icons.merge_type, size: 18),
-                        label: const Text('Merge All'),
+                        onPressed: _busy ? null : _completeKitting,
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: const Text('Complete Kitting'),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(46),
                           foregroundColor: Pwa.text,

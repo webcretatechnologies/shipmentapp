@@ -132,8 +132,9 @@ class _PlantexInvoiceScreenState extends State<PlantexInvoiceScreen> {
     );
   }
 
-  // Already invoiced → show status (summary API has no dispatch detail fields).
+  // Already invoiced → show status + the raised dispatch details.
   Widget _readOnly(PlantexShipment s) {
+    final hasDispatch = (s.transporterName ?? '').isNotEmpty || (s.vehicleNo ?? '').isNotEmpty;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -157,6 +158,25 @@ class _PlantexInvoiceScreenState extends State<PlantexInvoiceScreen> {
             ],
           ),
         ),
+        if (hasDispatch) ...[
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionLabel('Dispatch details'),
+                const SizedBox(height: 8),
+                _kv('Transporter', s.transporterName ?? '—'),
+                if ((s.transporterGst ?? '').isNotEmpty) _kv('Transporter GST', s.transporterGst!),
+                _kv('Vehicle No', s.vehicleNo ?? '—'),
+                _kv('Driver', s.driverName ?? '—'),
+                _kv('Driver No', s.driverNo ?? '—'),
+                if ((s.dispatchNotes ?? '').isNotEmpty) _kv('Notes', s.dispatchNotes!),
+                if ((s.invoiceRaisedAt ?? '').isNotEmpty) _kv('Raised at', s.invoiceRaisedAt!),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         Text(
           s.invoiceApproved
