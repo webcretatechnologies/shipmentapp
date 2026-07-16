@@ -52,14 +52,19 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final isVendor = _loginType == AppRole.supplier;
 
     return Scaffold(
-      backgroundColor: Pwa.headerBottom,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           _brandHeader(),
           Expanded(
-            child: Container(
+            child: Transform.translate(
+              offset: const Offset(0, -22),
+              child: Container(
               width: double.infinity,
-              color: Colors.white,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+              ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(22, 26, 22, 28),
                 child: ConstrainedBox(
@@ -85,7 +90,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           controller: _email,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          decoration: _dec(hint: 'staff@plantex.work'),
+                          decoration: _dec(
+                            hint: 'staff@plantex.work',
+                            prefix: const Icon(Icons.mail_outline_rounded, color: Pwa.muted, size: 20),
+                          ),
                           validator: (v) =>
                               (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                         ),
@@ -99,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           onFieldSubmitted: (_) => _submit(),
                           decoration: _dec(
                             hint: '••••••••',
+                            prefix: const Icon(Icons.lock_outline_rounded, color: Pwa.muted, size: 20),
                             suffix: IconButton(
                               icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                   color: Pwa.muted),
@@ -107,15 +116,41 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           ),
                           validator: (v) => (v == null || v.isEmpty) ? 'Enter your password' : null,
                         ),
-                        const SizedBox(height: 26),
-                        FilledButton(
-                          onPressed: auth.busy ? null : _submit,
-                          child: auth.busy
-                              ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : Text(isVendor ? 'Sign in as Vendor' : 'Sign in'),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please contact your administrator to reset your password.')),
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: kBrandAccent,
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Forgot password?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(color: kBrandAccent.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+                            ],
+                          ),
+                          child: FilledButton(
+                            onPressed: auth.busy ? null : _submit,
+                            child: auth.busy
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : Text(isVendor ? 'Sign in as Vendor' : 'Sign in'),
+                          ),
                         ),
                         const SizedBox(height: 14),
                         Center(
@@ -130,6 +165,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ),
                 ),
               ),
+            ),
             ),
           ),
         ],
@@ -208,13 +244,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  InputDecoration _dec({required String hint, Widget? suffix}) => InputDecoration(
+  InputDecoration _dec({required String hint, Widget? prefix, Widget? suffix}) => InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+        prefixIcon: prefix,
         suffixIcon: suffix,
         filled: true,
         fillColor: const Color(0xFFF8FAFC),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: kBrandAccent, width: 1.6),
+        ),
       );
 }
 

@@ -75,7 +75,8 @@ enum DashboardModule {
   shortBox('Short Box', Icons.unarchive_outlined, '/short-box'),
   shortSku('Short SKU', Icons.report_problem_outlined, '/short-sku'),
   invoices('Invoices', Icons.receipt_long_outlined, '/invoices'),
-  purchaseOrders('Purchase Orders', Icons.assignment_outlined, '/purchase-orders');
+  purchaseOrders('Purchase Orders', Icons.assignment_outlined, '/purchase-orders'),
+  plantex('Plantex Shipments', Icons.factory_outlined, '/plantex-shipments');
 
   const DashboardModule(this.label, this.icon, this.route);
   final String label;
@@ -98,6 +99,7 @@ List<DashboardModule> modulesForRole(AppRole role) {
       DashboardModule.shortBox,
       DashboardModule.invoices,
       DashboardModule.purchaseOrders,
+      DashboardModule.plantex,
     ];
   }
   // Plantex (warehouse)
